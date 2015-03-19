@@ -164,7 +164,9 @@ public class SJQClient {
 		}
 		if (deps != null) {
 			for (String dep: deps){
-				job.addWaitForJob(dep);
+				if (dep != null && !dep.equals("")) {
+					job.addWaitForJob(dep);
+				}
 			}
 		}
 		job.setBody(body);
@@ -203,7 +205,9 @@ public class SJQClient {
 
 			if (job.getWaitFor() != null) {
 				for (String dep: job.getWaitFor()) {
-					writeLine("DEP " + dep);
+					if (dep != null && !dep.equals("")) {
+						writeLine("DEP " + dep);
+					}
 				}
 			}
 

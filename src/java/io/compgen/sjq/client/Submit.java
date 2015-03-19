@@ -23,7 +23,7 @@ public class Submit extends BaseCLI {
 	private String stdout=null;
 	private String stderr=null;
 
-	private String deps=null;
+	private String deps="";
 	
 	@UnnamedArg(name="script", required=true)
 	public void setScript(String script) {

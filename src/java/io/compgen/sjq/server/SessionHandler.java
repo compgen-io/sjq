@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SessionHandler implements Runnable {
@@ -119,6 +120,7 @@ public class SessionHandler implements Runnable {
 		Job job = new Job(name);
 		
 		String body = null;
+		List<String> missingDeps = new ArrayList<String>();
 		while (!closed && body == null) {
 			String s = readLine();
 			if (s == null || s.equals("")) {
@@ -151,7 +153,12 @@ public class SessionHandler implements Runnable {
 				job.setMem(line[1]);
 				break;
 			case "DEP":
-				job.addWaitForJob(line[1]);
+				Job dep = server.getQueue().getJob(line[1]);
+				if (dep != null) {
+					job.addWaitForJob(line[1]);
+				} else {
+					missingDeps.add(line[1]);
+				}
 				break;
 			case "BODY":
 				int size = Integer.parseInt(line[1]);
@@ -161,9 +168,19 @@ public class SessionHandler implements Runnable {
 			}
 		}
 
+		if (missingDeps.size() > 0) {
+			writeLine("ERROR Missing dependency - " + StringUtils.join(",", missingDeps));
+			return;
+		}
+		
+		if (body == null) {
+			writeLine("ERROR Missing body");
+			return;
+		}
 		
 		String jobId = this.server.getQueue().addJob(job);
 		writeLine("OK "+jobId);
+
 	}
 
 	public void close() throws IOException {

@@ -2,11 +2,14 @@ package io.compgen.sjq.server;
 
 import io.compgen.sjq.support.Counter;
 import io.compgen.sjq.support.RandomUtils;
+import io.compgen.sjq.support.StringUtils;
 
 import java.io.File;
 import java.util.ArrayDeque;
+import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ThreadedJobQueue {
@@ -26,7 +29,7 @@ public class ThreadedJobQueue {
 	private long timeout = -1;
 	
 	public Deque<Job> pending = new ArrayDeque<Job>();
-	public Map<String, RunningJob> running = new HashMap<String, RunningJob>();
+	public Map<String, RunningJob> running = new LinkedHashMap<String, RunningJob>();
 	public Map<String, Job> jobs = new HashMap<String, Job>();
 	
 	private boolean closing = false;
@@ -62,19 +65,23 @@ public class ThreadedJobQueue {
 		procThread = new Thread() {
 			public void run() {
 				while (!closing) {
-					System.err.println("Status: " + getStatus());
 					if (timeout > 0 && pending.size() == 0 && running.size() == 0) {
 						if (emptyCheck == -1) {
 							emptyCheck = System.currentTimeMillis();
 						} else  {
 							if ((System.currentTimeMillis() - emptyCheck) > timeout) {
-								// idle timeout!
+								System.err.println("Timeout waiting for a job!");
 								server.shutdown();
 								return;
 							}
 						}
 					}
 					
+					System.err.println(new Date() + " Status: " + getStatus());
+					if (running.size()>0) {
+						printRunningStatus();
+					}
+
 					checkJobHolds();
 					Job jobToRun = findJobToRun();
 		
@@ -83,7 +90,8 @@ public class ThreadedJobQueue {
 						emptyCheck = -1;
 					} else {
 						try {
-							Thread.sleep(60000);
+							// sleep for one minute, or half the length of the timeout, which ever is shorter.
+							Thread.sleep(timeout > 0 ? Math.min(60000, timeout/2) : 60000);
 						} catch (InterruptedException e) {
 						}
 					}
@@ -95,6 +103,14 @@ public class ThreadedJobQueue {
 		return true;
 	}
 
+	public void printRunningStatus() {
+		System.err.println("-------------------------");
+		for (RunningJob job: running.values()) {
+			System.err.println("Running: " + job.getJob().getJobId() + " "+ StringUtils.pad(job.getJob().getName(), 12, ' ') + " " + job.getJob().getProcs() + " " + timespanToString(System.currentTimeMillis() - job.getJob().getStartTime()));
+		}
+		System.err.println("-------------------------");
+	}
+	
 	public String getStatus() {
 		Counter<String> counter = new Counter<String>();
 		for (Job job: jobs.values()) {
@@ -149,6 +165,9 @@ public class ThreadedJobQueue {
 		job.setStartTime(System.currentTimeMillis());
 		pending.remove(job);
 
+		usedProcs += job.getProcs();
+		usedMem += job.getMem();
+		
 		RunningJob run = new RunningJob(this, job);
 		running.put(job.getJobId(), run);
 		run.start();
@@ -181,6 +200,10 @@ public class ThreadedJobQueue {
 			job.setState(JobState.ERROR);
 		}
 		job.setEndTime(System.currentTimeMillis());
+
+		usedProcs -= job.getProcs();
+		usedMem -= job.getMem();
+		
 		procThread.interrupt();
 	}
 	
@@ -190,5 +213,49 @@ public class ThreadedJobQueue {
 
 	public Job getJob(String jobId) {
 		return jobs.get(jobId);
+	}
+
+	public static String timespanToString(long timeSpanMillis) {
+		String s = "";
+		
+		long hours = timeSpanMillis / (60 * 60 * 1000);
+		timeSpanMillis = timeSpanMillis - (hours * 60 * 60 * 1000);
+
+		long mins = timeSpanMillis / (60 * 1000);
+		timeSpanMillis = timeSpanMillis - (mins * 60 * 1000);
+
+		long secs = timeSpanMillis / 1000;
+
+		if (hours > 0) {
+		s += hours +":";
+		}
+
+		if (mins > 10) {
+			s += mins +":";
+		} else if (mins > 0) {
+			if (!s.equals("")) {
+				s += "0";
+			}
+			s += mins +":";			
+		} else if (mins == 0 && hours > 0) {
+			if (!s.equals("")) {
+				s += "00:";
+			}
+		}
+
+		if (secs > 10) {
+			s += secs;
+		} else if (secs > 0) {
+			if (!s.equals("")) {
+				s += "0";
+			}
+			s += secs;			
+		} else if (secs == 0) {
+			if (!s.equals("")) {
+				s += "00";
+			}
+		}
+		
+		return s;
 	}
 }

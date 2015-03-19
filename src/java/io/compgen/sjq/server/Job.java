@@ -83,7 +83,11 @@ public class Job {
 	}
 
 	public void setProcs(int procs) {
-		this.procs = procs;
+		if (procs < 1) {
+			this.procs = 1;
+		} else {
+			this.procs = procs;
+		}
 	}
 
 	public long getMem() {
@@ -91,10 +95,14 @@ public class Job {
 	}
 
 	public void setMem(long mem) {
-		this.mem=mem;
+		if (mem > 0) {
+			this.mem = mem;
+		} else {
+			this.mem=-1;
+		}
 	}
 	public void setMem(String mem) {
-		this.mem = SJQUtils.memStrToLong(mem);
+		setMem(SJQUtils.memStrToLong(mem));
 	}
 	
 	public void addWaitForJob(String jobId) {

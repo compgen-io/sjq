@@ -9,6 +9,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StringUtils {
+	public interface MapFunc<T, V> {
+		public V map(T obj);
+	}
 	public static String strip(String str) {
 		return lstrip(rstrip(str));
 	}
@@ -107,5 +110,86 @@ public class StringUtils {
 		
 		return tokens;
     }
+    public static String join(String delim, String[] args) {
+        String out = "";
+        
+        for (String arg: args) {
+            if (out.equals("")) {
+                out = arg;
+            } else {
+                out = out + delim + arg;
+            }
+        }
+        
+        return out;
+    }
+
+    public static String join(String delim, double[] args) {
+        String out = "";
+        
+        for (Number arg: args) {
+            if (out.equals("")) {
+                out = ""+arg;
+            } else {
+                out = out + delim + arg;
+            }
+        }
+        
+        return out;
+    }
+
+    public static String join(String delim, int[] args) {
+        String out = "";
+        
+        for (Number arg: args) {
+            if (out.equals("")) {
+                out = ""+arg;
+            } else {
+                out = out + delim + arg;
+            }
+        }
+        
+        return out;
+    }
+    
+    public static String join(String delim, Iterable<? extends Object> args) {
+    	return join(delim, args, null);
+    }
+    public static <T> String join(String delim, Iterable<T> args, MapFunc<T, String> mapper) {
+        String out = "";
+        if (args != null) {
+	        for (T arg: args) {
+	        	String val = null;
+	        	if (mapper == null) {
+	        		val = arg.toString();
+	        	} else {
+	        		val = mapper.map(arg);
+	        	}
+	        	
+	        	if (val == null) {
+	        		continue;
+	        	}
+	        	
+	            if (out.equals("")) {
+	                out = val;
+	            } else {
+	                out = out + delim + val;
+	            }
+	        }
+        }
+        
+        return out;
+    }
+
+	public static String pad(String name, int i, char c) {
+		String s = name;
+		if (s.length() > i) {
+			return s.substring(0, i);
+		}
+		while (s.length() < c) {
+			s += c;
+		}
+		return s;
+	}
 
 }

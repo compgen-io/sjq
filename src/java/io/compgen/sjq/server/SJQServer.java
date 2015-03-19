@@ -6,7 +6,7 @@ import io.compgen.annotation.Option;
 import io.compgen.exceptions.CommandArgumentException;
 import io.compgen.sjq.support.SJQUtils;
 
-@Command(name="server", category="server")
+@Command(name="server", category="server", desc="Start up SJQ in server mode")
 public class SJQServer implements Exec {
 	private ThreadedSocketListener threadedSocketListener = null;
 	private ThreadedJobQueue threadedJobQueue = null;
@@ -20,7 +20,7 @@ public class SJQServer implements Exec {
 	private long timeout_ms = -1;
 	
 	private int maxProcs = Runtime.getRuntime().availableProcessors();
-	private long maxMem = -1;
+	private String maxMem = null;
 
 	@Option(name="port", desc="Port to listen on (default: dynamic)", charName="p")
 	public void setPort(int port) {
@@ -48,11 +48,8 @@ public class SJQServer implements Exec {
 	}
 
 	@Option(name="mem", desc="Maximum memory to use for running jobs")
-	public void setMaxMemory(String maxMemoryStr) throws CommandArgumentException {
-		this.maxMem = SJQUtils.memStrToLong(maxMemoryStr);
-		if (this.maxMem == -1) {
-			throw new CommandArgumentException("Invalid memory setting: "+maxMemoryStr);
-		}
+	public void setMaxMemory(String maxMem) throws CommandArgumentException {
+		this.maxMem = maxMem;
 	}
 	
 	public void shutdown() {
@@ -71,7 +68,16 @@ public class SJQServer implements Exec {
 
 	@Override
 	public void exec() throws Exception {
-		threadedJobQueue = new ThreadedJobQueue(this, maxProcs, maxMem, timeout_ms, tempDir);
+		System.err.println("Max procs: "+maxProcs);
+		long maxMemVal = -1;
+		if (maxMem!=null) {
+			System.err.println("Max memory: "+maxMem);
+			maxMemVal = SJQUtils.memStrToLong(maxMem);
+			if (maxMemVal == -1) {
+				throw new CommandArgumentException("Invalid memory setting: "+maxMem);
+			}
+		}
+		threadedJobQueue = new ThreadedJobQueue(this, maxProcs, maxMemVal, timeout_ms, tempDir);
 		if (threadedJobQueue.start()) {
 			System.err.println("Started Job Queue.");
 			threadedSocketListener = new ThreadedSocketListener(this, host, port, portFilename);
