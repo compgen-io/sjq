@@ -35,7 +35,7 @@ public class Submit extends BaseCLI {
 		this.name = name;
 	}
 
-	@Option(name="procs", charName="p", desc="Processors (default: 1)")
+	@Option(name="procs", charName="c", desc="Required processors (default: 1)")
 	public void setProcs(int procs) {
 		this.procs = procs;
 	}

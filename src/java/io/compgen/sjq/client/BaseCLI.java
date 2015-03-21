@@ -1,11 +1,11 @@
 package io.compgen.sjq.client;
 
-import io.compgen.Exec;
+import io.compgen.annotation.Exec;
 import io.compgen.annotation.Option;
 import io.compgen.exceptions.CommandArgumentException;
 import io.compgen.sjq.support.StringUtils;
 
-public abstract class BaseCLI implements Exec {
+public abstract class BaseCLI {
 	private String connFile = null;
 	private int port = -1;
 	private String host = null;
@@ -26,7 +26,7 @@ public abstract class BaseCLI implements Exec {
 		this.connFile = fname;
 	}
 
-	@Override
+	@Exec
 	public void exec() throws Exception {
 		if (host == null && port == -1 && connFile == null) {
 			throw new CommandArgumentException("You must specify host and port or a connection file.");

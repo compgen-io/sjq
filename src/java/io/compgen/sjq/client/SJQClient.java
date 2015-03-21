@@ -143,6 +143,22 @@ public class SJQClient {
 			throw new ClientException(e);
 		}
 	}
+	public String killJob(String jobId) throws ClientException {
+		if (closed) {
+			throw new ClientException("Closed connection");
+		}
+		try {
+			writeLine("KILL "+jobId);
+			String result = readLine();
+			if (!result.startsWith("OK ")) {
+				throw new ClientException(result);
+			}
+			return result.substring(3);
+		} catch (IOException e) {
+			throw new ClientException(e);
+		}
+	}
+
 	public String submitJob(String name, String body, int procs, String mem, String stderr, String stdout, String cwd, Map<String, String> env, Iterable<String> deps) throws ClientException {
 	
 		Job job = new Job(name);

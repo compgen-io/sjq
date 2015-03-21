@@ -47,21 +47,34 @@ public class SessionHandler implements Runnable {
 					writeLine("OK Valid Commands: QUIT PING STATUS SUBMIT HELP");
 					break;
 				case "STATUS":
-					{
-						if (line.length == 2 && line[1] != null && !line[1].equals("")) {
-							String jobId = line[1];
-//							System.err.println("Looking for job: "+jobId);
-							Job job = server.getQueue().getJob(jobId);
-							if (job != null) {
-								writeLine("OK "+jobId+" "+job.getState().getCode());
-							} else {
-								writeLine("ERROR "+jobId+" not found!");
-							}
+				{
+					if (line.length == 2 && line[1] != null && !line[1].equals("")) {
+						String jobId = line[1];
+//						System.err.println("Looking for job: "+jobId);
+						Job job = server.getQueue().getJob(jobId);
+						if (job != null) {
+							writeLine("OK "+jobId+" "+job.getState().getCode());
 						} else {
-							writeLine(server.getQueue().getStatus());
+							writeLine("ERROR "+jobId+" not found!");
+						}
+					} else {
+						writeLine(server.getQueue().getStatus());
+					}
+				}
+				break;
+				case "KILL":
+				{
+					if (line.length == 2 && line[1] != null && !line[1].equals("")) {
+						String jobId = line[1];
+//						System.err.println("Looking for job: "+jobId);
+						if (server.getQueue().killJob(jobId)) {
+							writeLine("OK "+jobId+" K");
+						} else {
+							writeLine("ERROR "+jobId+" not found or already complete!");
 						}
 					}
-					break;
+				}
+				break;
 				case "DETAIL":
 					{
 						String jobId = line[1];
@@ -86,9 +99,13 @@ public class SessionHandler implements Runnable {
 								writeLine("STDERR " + job.getStderr());
 							}
 							writeLine("SUBMIT " + job.getSubmitTime());
-							writeLine("START " + job.getStartTime());
-							writeLine("END " + job.getEndTime());
-							writeLine("RETCODE " + job.getRetCode());
+							if (job.getStartTime() > 0) {
+								writeLine("START " + job.getStartTime());
+								if (job.getEndTime()>0) {
+									writeLine("END " + job.getEndTime());
+									writeLine("RETCODE " + job.getRetCode());
+								}
+							}
 							writeLine("OK");
 						} else {
 							writeLine("ERROR "+jobId+" not found!");
@@ -197,7 +214,9 @@ public class SessionHandler implements Runnable {
 		OutputStream os = this.client.getOutputStream();
 		os.write((s+"\r\n").getBytes());
 		os.flush();
-//		System.err.println(">>> " + s);
+		if (server.isVerbose()) {
+			System.err.println(">>> " + s);
+		}
 	}
 
 	protected String readLine() throws IOException {
@@ -219,7 +238,9 @@ public class SessionHandler implements Runnable {
 		} else if (s.endsWith("\n")) {
 			s = s.substring(0, s.length()-1);
 		}
-//		System.err.println("<<< " + s);
+		if (server.isVerbose()) {
+			System.err.println("<<< " + s);
+		}
 		return s;
 	}
 
@@ -240,7 +261,9 @@ public class SessionHandler implements Runnable {
 				read += s;
 			}
 		}
-//		System.err.println("<<< <" + bytes+" bytes>");
+		if (server.isVerbose()) {
+			System.err.println("<<< <" + bytes+" bytes>");
+		}
 		return new String(buf, 0, bytes);
 	}
 

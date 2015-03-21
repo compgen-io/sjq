@@ -98,7 +98,6 @@ public class RunningJob {
 	public void kill() {
 		proc.destroy();
 		runningThread.interrupt();
-		job.setState(JobState.KILLED);
 	}
 
 }

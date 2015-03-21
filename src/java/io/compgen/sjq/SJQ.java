@@ -1,6 +1,7 @@
 package io.compgen.sjq;
 
 import io.compgen.MainBuilder;
+import io.compgen.sjq.client.Kill;
 import io.compgen.sjq.client.Status;
 import io.compgen.sjq.client.Submit;
 import io.compgen.sjq.server.SJQServer;
@@ -17,6 +18,7 @@ public class SJQ {
 			.addCommand(SJQServer.class)
 			.addCommand(Status.class)
 			.addCommand(Submit.class)
+			.addCommand(Kill.class)
 			.findAndRun(args);
 	}
 }

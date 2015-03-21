@@ -1,12 +1,12 @@
 package io.compgen.sjq.server;
 
 import io.compgen.sjq.support.Counter;
+import io.compgen.sjq.support.MonitoredThread;
 import io.compgen.sjq.support.RandomUtils;
 import io.compgen.sjq.support.StringUtils;
 
 import java.io.File;
 import java.util.ArrayDeque;
-import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -33,8 +33,8 @@ public class ThreadedJobQueue {
 	public Map<String, Job> jobs = new HashMap<String, Job>();
 	
 	private boolean closing = false;
-	private Thread procThread = null;
-	
+	private MonitoredThread procThread = null;
+		
 	public ThreadedJobQueue(SJQServer server, int maxProcs, long maxMem, long timeout, String tempDir) {
 		this.server = server;
 		this.maxProcs = maxProcs;
@@ -58,11 +58,12 @@ public class ThreadedJobQueue {
 			for (RunningJob run:running.values()) {
 				run.kill();
 			}
+			server.log("Shutdown job queue...");
 		}
 	}
 
 	public boolean start() {
-		procThread = new Thread() {
+		procThread = new MonitoredThread(new Runnable() {
 			public void run() {
 				while (!closing) {
 					if (timeout > 0 && pending.size() == 0 && running.size() == 0) {
@@ -70,14 +71,14 @@ public class ThreadedJobQueue {
 							emptyCheck = System.currentTimeMillis();
 						} else  {
 							if ((System.currentTimeMillis() - emptyCheck) > timeout) {
-								System.err.println("Timeout waiting for a job!");
+								server.log("Timeout waiting for a job!");
 								server.shutdown();
 								return;
 							}
 						}
 					}
 					
-					System.err.println(new Date() + " Status: " + getStatus());
+					server.log("Status: " + getStatus());
 					if (running.size()>0) {
 						printRunningStatus();
 					}
@@ -97,7 +98,7 @@ public class ThreadedJobQueue {
 					}
 				}
 			}
-		};
+		});
 		
 		procThread.start();
 		return true;
@@ -160,7 +161,7 @@ public class ThreadedJobQueue {
 	}
 
 	private void runJob(Job job) {
-		System.err.println("Starting job - "+ job.getJobId());
+		server.log("Starting job - "+ job.getJobId());
 		job.setState(JobState.RUNNING);
 		job.setStartTime(System.currentTimeMillis());
 		pending.remove(job);
@@ -183,21 +184,36 @@ public class ThreadedJobQueue {
 		pending.add(job);
 		emptyCheck = -1;
 
-		System.err.println("New job: "+ jobId);
+		server.log("New job: "+ jobId);
 		procThread.interrupt();
 		return jobId;
 	}
 
+	public boolean killJob(String jobId) {
+		if (running.containsKey(jobId)) {
+			running.get(jobId).kill();
+		}
+		
+		Job job = jobs.get(jobId);
+		if (job != null && (job.getState() == JobState.HOLD || job.getState() == JobState.QUEUED || job.getState() == JobState.RUNNING)) {
+			job.setState(JobState.KILLED);
+			server.log("Job killed: " + jobId);
+			return true;
+		}
+		return false;
+	}
 	
 	public void jobDone(String jobId, int retcode) {
-		System.err.println("Job done: " + jobId);
+		server.log("Job done: " + jobId + " " + retcode);
 		running.remove(jobId);
 		Job job = jobs.get(jobId);
 
-		if (retcode == 0) {
-			job.setState(JobState.SUCCESS);
-		} else {
-			job.setState(JobState.ERROR);
+		if (job.getState() == JobState.RUNNING) {		
+			if (retcode == 0) {
+				job.setState(JobState.SUCCESS);
+			} else {
+				job.setState(JobState.ERROR);
+			}
 		}
 		job.setEndTime(System.currentTimeMillis());
 
@@ -215,6 +231,15 @@ public class ThreadedJobQueue {
 		return jobs.get(jobId);
 	}
 
+	public void join() {
+		while (this.procThread != null && !this.procThread.isDone()) {
+			try {
+				this.procThread.join(1000);
+			} catch (InterruptedException e) {
+			}
+		}
+	}
+	
 	public static String timespanToString(long timeSpanMillis) {
 		String s = "";
 		

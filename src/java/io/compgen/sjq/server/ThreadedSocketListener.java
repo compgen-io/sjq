@@ -1,5 +1,7 @@
 package io.compgen.sjq.server;
 
+import io.compgen.sjq.support.MonitoredThread;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,7 +23,9 @@ public class ThreadedSocketListener {
 	
 	private List<SessionHandler> sessions = new ArrayList<SessionHandler>();
 	final private SJQServer server;
-		
+	
+	private MonitoredThread thread = null;
+	
 	public ThreadedSocketListener(SJQServer server, String listenIP, int port, String socketFilename) {
 		this.server = server;
 		this.listenIP = listenIP;
@@ -42,13 +46,13 @@ public class ThreadedSocketListener {
 				try {
 					sh.close();
 				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
 			try {
 				socket.close();
 			} catch (IOException e) {
 			}
+			server.log("Shutdown socket listener...");
 		}
 	}
 	
@@ -85,13 +89,13 @@ public class ThreadedSocketListener {
 				
 			}
 		} catch (IOException e) {
-			System.err.println("Error starting socket listener! " + e.getMessage());
+			server.log("Error starting socket listener! " + e.getMessage());
 			return false;
 		}
 
-		System.out.println("Listening for clients on: "+getSocketAddr());
+		server.log("Listening for clients on: "+getSocketAddr());
 
-		new Thread() {
+		thread = new MonitoredThread(new Runnable() {
 			public void run() {
 				while (!closed) {
 					try{
@@ -109,7 +113,8 @@ public class ThreadedSocketListener {
 					}
 				}
 			}
-		}.start();
+		});
+		thread.start();
 		return true;
 	}
 
@@ -126,5 +131,13 @@ public class ThreadedSocketListener {
 			return socket.getInetAddress().getHostAddress()+":"+socket.getLocalPort();
 		} 
 		return null;
+	}
+	public void join() {
+		while (this.thread != null && !this.thread.isDone()) {
+			try {
+				this.thread.join(1000);
+			} catch (InterruptedException e) {
+			}
+		}
 	}
 }
