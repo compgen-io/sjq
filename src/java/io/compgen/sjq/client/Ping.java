@@ -1,6 +1,6 @@
 package io.compgen.sjq.client;
 
-import io.compgen.annotation.Command;
+import io.compgen.cmdline.annotation.Command;
 
 @Command(name="status", desc="Find the status of a job (or server)", category="client")
 public class Ping extends BaseCLI {

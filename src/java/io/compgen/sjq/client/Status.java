@@ -1,15 +1,15 @@
 package io.compgen.sjq.client;
 
-import io.compgen.annotation.Command;
-import io.compgen.annotation.Option;
-import io.compgen.annotation.UnnamedArg;
+import io.compgen.cmdline.annotation.Command;
+import io.compgen.cmdline.annotation.Option;
+import io.compgen.cmdline.annotation.UnnamedArg;
 
 @Command(name="status", desc="Find the status of a job (or server)", category="client")
 public class Status extends BaseCLI {
 	private String jobId = null;
 	private boolean verbose = false;
 
-	@UnnamedArg(name="jobid")
+	@UnnamedArg(name="jobid", required=false)
 	public void setJobId(String jobId) {
 		this.jobId = jobId;
 	}

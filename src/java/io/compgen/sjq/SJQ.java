@@ -1,8 +1,8 @@
 package io.compgen.sjq;
 
-import io.compgen.Help;
-import io.compgen.License;
-import io.compgen.MainBuilder;
+import io.compgen.cmdline.Help;
+import io.compgen.cmdline.License;
+import io.compgen.cmdline.MainBuilder;
 import io.compgen.sjq.client.Kill;
 import io.compgen.sjq.client.Ping;
 import io.compgen.sjq.client.Shutdown;

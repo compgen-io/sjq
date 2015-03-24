@@ -1,6 +1,6 @@
 package io.compgen.sjq.client;
 
-import io.compgen.annotation.Command;
+import io.compgen.cmdline.annotation.Command;
 
 @Command(name="shutdown", desc="Shutdown a running server", category="client")
 public class Shutdown extends BaseCLI {

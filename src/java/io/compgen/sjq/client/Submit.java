@@ -1,8 +1,8 @@
 package io.compgen.sjq.client;
 
-import io.compgen.annotation.Command;
-import io.compgen.annotation.Option;
-import io.compgen.annotation.UnnamedArg;
+import io.compgen.cmdline.annotation.Command;
+import io.compgen.cmdline.annotation.Option;
+import io.compgen.cmdline.annotation.UnnamedArg;
 import io.compgen.support.ListBuilder;
 import io.compgen.support.StringUtils;
 
@@ -25,7 +25,7 @@ public class Submit extends BaseCLI {
 
 	private String deps="";
 	
-	@UnnamedArg(name="script", required=true)
+	@UnnamedArg(name="script")
 	public void setScript(String script) {
 		this.script = script;
 	}

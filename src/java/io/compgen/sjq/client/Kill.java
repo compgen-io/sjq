@@ -1,7 +1,7 @@
 package io.compgen.sjq.client;
 
-import io.compgen.annotation.Command;
-import io.compgen.annotation.UnnamedArg;
+import io.compgen.cmdline.annotation.Command;
+import io.compgen.cmdline.annotation.UnnamedArg;
 
 @Command(name="kill", desc="Cancel a queued or running job", category="client")
 public class Kill extends BaseCLI {

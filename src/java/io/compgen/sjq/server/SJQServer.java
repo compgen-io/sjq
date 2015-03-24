@@ -1,9 +1,9 @@
 package io.compgen.sjq.server;
 
-import io.compgen.annotation.Command;
-import io.compgen.annotation.Exec;
-import io.compgen.annotation.Option;
-import io.compgen.exceptions.CommandArgumentException;
+import io.compgen.cmdline.annotation.Command;
+import io.compgen.cmdline.annotation.Exec;
+import io.compgen.cmdline.annotation.Option;
+import io.compgen.cmdline.exceptions.CommandArgumentException;
 import io.compgen.support.StringUtils;
 
 import java.io.File;
