@@ -2,7 +2,6 @@ package io.compgen.sjq.server;
 
 import io.compgen.sjq.support.Counter;
 import io.compgen.sjq.support.MonitoredThread;
-import io.compgen.sjq.support.RandomUtils;
 import io.compgen.sjq.support.StringUtils;
 
 import java.io.File;
@@ -13,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ThreadedJobQueue {
-	private String queueID = RandomUtils.randomString(8);
+	private String queueID = StringUtils.randomString(8);
 
 	final private SJQServer server;
 	final private int maxProcs;

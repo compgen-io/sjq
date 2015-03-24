@@ -1,6 +1,7 @@
 package io.compgen.sjq.support;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -196,10 +198,15 @@ public class StringUtils {
 	}
 
 	public static void writeFile(String filename, String val) throws IOException {
-		writeFile(filename, val, false);
+		writeFile(new File(filename), val, false);
 	}
-	
+	public static void writeFile(File file, String val) throws IOException {
+		writeFile(file, val, false);
+	}
 	public static void writeFile(String filename, String val, boolean append) throws IOException {
+		writeFile(new File(filename), val, append);
+	}
+	public static void writeFile(File filename, String val, boolean append) throws IOException {
 		OutputStream os;
 		if (filename.equals("-")) {
 			os = System.out;
@@ -214,6 +221,16 @@ public class StringUtils {
 			os.close();
 		}
 		
+	}
+	final private static String sym = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	final private static Random rand = new Random();
+	
+	public static String randomString(int len) {
+		String s="";
+		while (s.length()<len) {
+			s += sym.charAt(rand.nextInt(sym.length()));
+		}
+		return s;
 	}
 
 }
