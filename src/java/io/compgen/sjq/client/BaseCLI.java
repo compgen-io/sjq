@@ -5,6 +5,7 @@ import io.compgen.annotation.Option;
 import io.compgen.exceptions.CommandArgumentException;
 import io.compgen.sjq.support.StringUtils;
 
+import java.io.File;
 import java.io.IOException;
 
 public abstract class BaseCLI {
@@ -35,7 +36,10 @@ public abstract class BaseCLI {
 	}
 
 	@Option(name="passwdfile", desc="Set a password for the job-queue (read from file)")
-	public void setPasswdFile(String filename) throws IOException {
+	public void setPasswdFile(String filename) throws IOException, CommandArgumentException {
+		if (!new File(filename).exists()) {
+			throw new CommandArgumentException("Missing password-file: "+filename);
+		}
 		this.passwd = StringUtils.strip(StringUtils.readFile(filename));
 	}
 

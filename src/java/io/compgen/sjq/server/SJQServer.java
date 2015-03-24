@@ -26,11 +26,9 @@ public class SJQServer {
 	private String host = "127.0.0.1";
 	private String pidfile = null;
 	private String passwd = "";
-	private String passwdFile = null;
 	
 	private boolean silent = false;
 	private boolean verbose = false;
-	private boolean deletePasswdFileOnShutdown = false;
 	
 	private String tempDir = null;
 	private long timeout_ms = -1;
@@ -78,7 +76,6 @@ public class SJQServer {
 
 	@Option(name="passwd-file", desc="Read the password for the job-queue from file")
 	public void setPasswdFile(String filename) throws IOException, CommandArgumentException {
-		this.passwdFile = filename;
 		if (!new File(filename).exists()) {
 			throw new CommandArgumentException("Missing password-file: "+filename);
 		}
@@ -90,11 +87,6 @@ public class SJQServer {
 		this.verbose = val;
 	}
 	
-	@Option(name="passwd-del", desc="Delete password file on server shutdown")
-	public void setDeletePasswdFileOnShutdown(boolean val) {
-		this.deletePasswdFileOnShutdown = val;
-	}
-
 	@Option(name="silent", desc="Suppress log messages", charName="s")
 	public void setSilent(boolean val) {
 		this.silent = val;
@@ -139,11 +131,7 @@ public class SJQServer {
 			StringUtils.writeFile(pidfile, System.getProperty("io.compgen.support.pid"));
 			new File(pidfile).deleteOnExit();
 		}
-		
-		if (deletePasswdFileOnShutdown) {
-			new File(this.passwdFile).deleteOnExit();
-		}
-		
+				
 		log("Max procs: "+maxProcs);
 		long maxMemVal = -1;
 		if (maxMem!=null) {
