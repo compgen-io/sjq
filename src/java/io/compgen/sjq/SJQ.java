@@ -1,5 +1,7 @@
 package io.compgen.sjq;
 
+import io.compgen.Help;
+import io.compgen.License;
 import io.compgen.MainBuilder;
 import io.compgen.sjq.client.Kill;
 import io.compgen.sjq.client.Ping;
@@ -16,6 +18,7 @@ public class SJQ {
 			.setDefaultUsage("Usage: sjq cmd [options]")
 			.setHelpFooter("http://compgen.io/sjq\n"+MainBuilder.readFile("VERSION"))
 			.setCategoryOrder(new String[]{"server", "client", "help"})
+			.addCommand(Help.class)
 			.addCommand(License.class)
 			.addCommand(SJQServer.class)
 			.addCommand(Status.class)
