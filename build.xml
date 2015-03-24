@@ -30,14 +30,13 @@
 
 		<mkdir dir="${dist.dir}"/>
 	    <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${lib.dir}/jarjar-1.4.jar"/>
-        <jar destfile="${dist.dir}/${ant.project.name}-api-${version}-${repository.version}.jar" basedir="${build.dir}/classes"/>
         <jar destfile="${dist.dir}/${ant.project.name}-${version}-${repository.version}.jar" basedir="${build.dir}/classes"/>
 	    <jarjar jarfile="${dist.dir}/${ant.project.name}.jar.tmp">
             <manifest>
                 <attribute name="Main-Class" value="io.compgen.sjq.SJQ"/>
             </manifest>
 	        <fileset dir="${build.dir}/classes"/>
-            <zipfileset src="${lib.dir}/cmdlinej-0.4-0a9ba46.jar"/>
+            <zipfileset src="${lib.dir}/compgen-cmdline-0.4.1-a345bb0.jar"/>
             <zipfileset src="${lib.dir}/compgen-support-0.1-14f9795.jar"/>
 	    </jarjar>
         <delete file="${dist.dir}/${project.name}"/>
