@@ -3,8 +3,8 @@ package io.compgen.sjq.client;
 import io.compgen.annotation.Command;
 import io.compgen.annotation.Option;
 import io.compgen.annotation.UnnamedArg;
-import io.compgen.sjq.support.ListUtils;
-import io.compgen.sjq.support.StringUtils;
+import io.compgen.support.ListBuilder;
+import io.compgen.support.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +83,7 @@ public class Submit extends BaseCLI {
 		}
 		
 		try {
-			String jobid = client.submitJob(name, StringUtils.readFile(script), procs, mem, stderr, stdout, cwd, env, ListUtils.build(deps.split(",")));
+			String jobid = client.submitJob(name, StringUtils.readFile(script), procs, mem, stderr, stdout, cwd, env, ListBuilder.build(deps.split(",")));
 			System.out.println(jobid);
 			client.close();
 		} catch (ClientException | IOException | AuthException e) {

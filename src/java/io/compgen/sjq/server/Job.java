@@ -1,7 +1,5 @@
 package io.compgen.sjq.server;
 
-import io.compgen.sjq.support.SJQUtils;
-
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -102,7 +100,7 @@ public class Job {
 		}
 	}
 	public void setMem(String mem) {
-		setMem(SJQUtils.memStrToLong(mem));
+		setMem(ThreadedJobQueue.memStrToLong(mem));
 	}
 	
 	public void addWaitForJob(String jobId) {

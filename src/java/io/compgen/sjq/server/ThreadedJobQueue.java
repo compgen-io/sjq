@@ -1,8 +1,8 @@
 package io.compgen.sjq.server;
 
-import io.compgen.sjq.support.Counter;
-import io.compgen.sjq.support.MonitoredThread;
-import io.compgen.sjq.support.StringUtils;
+import io.compgen.support.MonitoredThread;
+import io.compgen.support.StringUtils;
+import io.compgen.support.TallyValues;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -112,7 +112,7 @@ public class ThreadedJobQueue {
 	}
 	
 	public String getStatus() {
-		Counter<String> counter = new Counter<String>();
+		TallyValues<String> counter = new TallyValues<String>();
 		for (Job job: jobs.values()) {
 			counter.incr(job.getState().getCode());
 		}
@@ -121,7 +121,7 @@ public class ThreadedJobQueue {
 			if (!s.equals("")) {
 				s+=" ";
 			}
-			s += k+":"+counter.get(k);
+			s += k+":"+counter.getCount(k);
 		}
 		
 		if (s.equals("")) {
@@ -239,6 +239,21 @@ public class ThreadedJobQueue {
 		}
 	}
 	
+	public static long memStrToLong(String memVal) {
+		if (memVal.toUpperCase().endsWith("G")) {
+			return Long.parseLong(memVal.substring(0, memVal.length()-1)) * 1024 * 1024 * 1024;
+		} else if (memVal.toUpperCase().endsWith("M")) {
+			return Long.parseLong(memVal.substring(0, memVal.length()-1)) * 1024 * 1024;
+		} else if (memVal.toUpperCase().endsWith("K")) {
+			return Long.parseLong(memVal.substring(0, memVal.length()-1)) * 1024;
+		}
+		try {
+			return Long.parseLong(memVal);
+		} catch (NumberFormatException e) {
+			return -1;
+		}
+	}
+
 	public static String timespanToString(long timeSpanMillis) {
 		String s = "";
 		

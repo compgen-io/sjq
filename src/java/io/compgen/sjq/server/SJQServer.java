@@ -4,8 +4,7 @@ import io.compgen.annotation.Command;
 import io.compgen.annotation.Exec;
 import io.compgen.annotation.Option;
 import io.compgen.exceptions.CommandArgumentException;
-import io.compgen.sjq.support.SJQUtils;
-import io.compgen.sjq.support.StringUtils;
+import io.compgen.support.StringUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -136,7 +135,7 @@ public class SJQServer {
 		long maxMemVal = -1;
 		if (maxMem!=null) {
 			log("Max memory: "+maxMem);
-			maxMemVal = SJQUtils.memStrToLong(maxMem);
+			maxMemVal = ThreadedJobQueue.memStrToLong(maxMem);
 			if (maxMemVal == -1) {
 				throw new CommandArgumentException("Invalid memory setting: "+maxMem);
 			}
