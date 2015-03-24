@@ -13,9 +13,12 @@ import java.util.Map;
 public class SJQClient {
 	final private Socket socket;
 	private boolean closed = false;
+	private String passwd = null;
+	private boolean isauth = false;
 	
-	public SJQClient(String host, int port) throws UnknownHostException, IOException {
+	public SJQClient(String host, int port, String passwd) throws UnknownHostException, IOException {
 		this.socket = new Socket(host, port);
+		this.passwd = passwd;
 	}
 	
 	protected void writeLine(String s) throws IOException {
@@ -94,16 +97,33 @@ public class SJQClient {
 		}
 	}
 
-	public void shutdown() throws ClientException {
+	public void auth() throws ClientException, AuthException {
+		if (closed) {
+			throw new ClientException("Closed connection");
+		}
+		try {
+			writeLine("AUTH "+this.passwd);
+			String result = readLine();
+			if (!result.equals("OK AUTH")) {
+				throw new AuthException(result);
+			}
+			this.isauth = true;
+		} catch (IOException e) {
+			throw new ClientException(e);
+		}
+	}
+
+	public String shutdown() throws ClientException, AuthException {
+		if (!isauth) {
+			auth();
+		}
 		if (closed) {
 			throw new ClientException("Closed connection");
 		}
 		
 		try {
 			writeLine("SHUTDOWN");
-			readLine();
-			this.socket.close();
-			closed = true;
+			return readLine();
 		} catch (IOException e) {
 			throw new ClientException(e);
 		}
@@ -124,7 +144,10 @@ public class SJQClient {
 		}
 	}
 
-	public String getStatus(String jobId) throws ClientException {
+	public String getStatus(String jobId) throws ClientException, AuthException {
+		if (!isauth) {
+			auth();
+		}
 		if (closed) {
 			throw new ClientException("Closed connection");
 		}
@@ -143,7 +166,10 @@ public class SJQClient {
 			throw new ClientException(e);
 		}
 	}
-	public String killJob(String jobId) throws ClientException {
+	public String killJob(String jobId) throws ClientException, AuthException {
+		if (!isauth) {
+			auth();
+		}
 		if (closed) {
 			throw new ClientException("Closed connection");
 		}
@@ -159,8 +185,7 @@ public class SJQClient {
 		}
 	}
 
-	public String submitJob(String name, String body, int procs, String mem, String stderr, String stdout, String cwd, Map<String, String> env, Iterable<String> deps) throws ClientException {
-	
+	public String submitJob(String name, String body, int procs, String mem, String stderr, String stdout, String cwd, Map<String, String> env, Iterable<String> deps) throws ClientException, AuthException {	
 		Job job = new Job(name);
 		job.setProcs(procs);
 		if (mem != null) {
@@ -190,7 +215,10 @@ public class SJQClient {
 		return submitJob(job);
 	}
 
-	public String submitJob(Job job) throws ClientException {
+	public String submitJob(Job job) throws ClientException, AuthException {
+		if (!isauth) {
+			auth();
+		}
 		if (closed) {
 			throw new ClientException("Closed connection");
 		}
@@ -241,7 +269,10 @@ public class SJQClient {
 		}
 	}
 
-	public void getDetailedStatus(String jobId, PrintStream out) throws ClientException {
+	public void getDetailedStatus(String jobId, PrintStream out) throws ClientException, AuthException {
+		if (!isauth) {
+			auth();
+		}
 		if (closed) {
 			throw new ClientException("Closed connection");
 		}

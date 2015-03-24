@@ -1,8 +1,11 @@
 package io.compgen.sjq.support;
 
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -190,6 +193,27 @@ public class StringUtils {
 			s += c;
 		}
 		return s;
+	}
+
+	public static void writeFile(String filename, String val) throws IOException {
+		writeFile(filename, val, false);
+	}
+	
+	public static void writeFile(String filename, String val, boolean append) throws IOException {
+		OutputStream os;
+		if (filename.equals("-")) {
+			os = System.out;
+		} else {
+			os = new BufferedOutputStream(new FileOutputStream(filename, append));
+		}
+		
+		os.write(val.getBytes());
+		os.flush();
+
+		if (os != System.out) {
+			os.close();
+		}
+		
 	}
 
 }

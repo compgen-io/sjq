@@ -16,7 +16,8 @@ public class Kill extends BaseCLI {
 	protected void process(SJQClient client) {
 		try {
 			System.out.println(client.killJob(jobId));
-		} catch (ClientException e) {
+			client.close();
+		} catch (ClientException | AuthException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}

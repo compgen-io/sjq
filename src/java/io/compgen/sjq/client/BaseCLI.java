@@ -5,10 +5,13 @@ import io.compgen.annotation.Option;
 import io.compgen.exceptions.CommandArgumentException;
 import io.compgen.sjq.support.StringUtils;
 
+import java.io.IOException;
+
 public abstract class BaseCLI {
 	private String connFile = null;
 	private int port = -1;
 	private String host = null;
+	private String passwd = "";
 	
 	@Option(name="port", desc="Port to listen on (default: dynamic)", charName="p")
 	public void setPort(int port) {
@@ -26,6 +29,17 @@ public abstract class BaseCLI {
 		this.connFile = fname;
 	}
 
+	@Option(name="passwd", desc="Set a password for the job-queue")
+	public void setPasswd(String passwd) {
+		this.passwd = passwd;
+	}
+
+	@Option(name="passwdfile", desc="Set a password for the job-queue (read from file)")
+	public void setPasswdFile(String filename) throws IOException {
+		this.passwd = StringUtils.strip(StringUtils.readFile(filename));
+	}
+
+
 	@Exec
 	public void exec() throws Exception {
 		if (host == null && port == -1 && connFile == null) {
@@ -41,9 +55,8 @@ public abstract class BaseCLI {
 //		
 //		System.err.println("Connecting to: " + host + ":" + port);
 
-		SJQClient client = new SJQClient(host, port);
+		SJQClient client = new SJQClient(host, port, passwd);
 		process(client);
-		client.close();
 	}
 
 	protected abstract void process(SJQClient client);

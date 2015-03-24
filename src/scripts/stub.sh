@@ -1,27 +1,15 @@
 #!/bin/sh
-MYSELF=`which "$0" 2>/dev/null`
-if [ "$?" -gt 0 ]; then
-	MYSELF="./$0"
+
+if [ "$1" == "daemon" ]; then
+    if [ "$2" == "server" ]; then
+        echo "Starting server as a background daemon..."
+        shift
+        ($0 $@ <&- &>/dev/null &) &
+        exit
+    fi
 fi
 
-#if [ -e $(dirname $0)/.mvpiperc ]; then
-#    . $(dirname $0)/.mvpiperc
-#fi
-#if [ -e $HOME/.mvpiperc ]; then
-#    . $HOME/.mvpiperc
-#fi
-
-#if [ ! -t 0 ]; then 
-#    JAVA_OPTS="${JAVA_OPTS} -Dorg.ngsutils.support.tty.fd0=F"
-#fi
-
-#if [ ! -t 1 ]; then 
-#    JAVA_OPTS="${JAVA_OPTS} -Dorg.ngsutils.support.tty.fd1=F"
-#fi
-
-#if [ ! -t 2 ]; then 
-#    JAVA_OPTS="${JAVA_OPTS} -Dorg.ngsutils.support.tty.fd2=F"
-#fi
+JAVA_OPTS="${JAVA_OPTS} -Dio.compgen.support.pid=$$"
 
 JAVABIN=`which java`
 if [ "${JAVA_HOME}" != "" ]; then

@@ -17,6 +17,7 @@ public class ThreadedSocketListener {
 	protected int port = 0;
 	protected String socketFilename = null;
 	protected String listenIP = null;
+	protected String passwd = null;
 	
 	protected ServerSocket socket = null;
 	private boolean closed = false;
@@ -26,11 +27,12 @@ public class ThreadedSocketListener {
 	
 	private MonitoredThread thread = null;
 	
-	public ThreadedSocketListener(SJQServer server, String listenIP, int port, String socketFilename) {
+	public ThreadedSocketListener(SJQServer server, String listenIP, int port, String socketFilename, String passwd) {
 		this.server = server;
 		this.listenIP = listenIP;
 		this.port = port;
 		this.socketFilename = socketFilename;
+		this.passwd = passwd;
 	}
 	
 	public void close() {
@@ -75,18 +77,12 @@ public class ThreadedSocketListener {
 				f.setExecutable(false,  false);
 				f.setReadable(true,  true);
 				f.setWritable(true,  true);
+
 				OutputStream os = new FileOutputStream(f);
 				os.write((getSocketAddr()+"\n").getBytes());
 				os.close();
-				
-				Runtime.getRuntime().addShutdownHook(new Thread() {
-					public void run() {
-						if (f.exists()) {
-							f.delete();
-						}
-					}
-				});
-				
+
+				f.deleteOnExit();
 			}
 		} catch (IOException e) {
 			server.log("Error starting socket listener! " + e.getMessage());
@@ -101,7 +97,8 @@ public class ThreadedSocketListener {
 					try{
 						while (!closed) {
 							Socket client = socket.accept(); 
-							SessionHandler sh = new SessionHandler(client, server);
+							server.log("New client connection: "+ client.getInetAddress().getHostAddress()+":"+client.getPort());
+							SessionHandler sh = new SessionHandler(client, server, passwd);
 							Thread t = new Thread(sh);
 							sessions.add(sh);
 							t.start();

@@ -24,11 +24,11 @@ public class Status extends BaseCLI {
 		try {
 			if (verbose && jobId != null) {
 				client.getDetailedStatus(jobId, System.out);
-				
 			} else {
 				System.out.println(client.getStatus(jobId));
 			}
-		} catch (ClientException e) {
+			client.close();
+		} catch (ClientException | AuthException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}

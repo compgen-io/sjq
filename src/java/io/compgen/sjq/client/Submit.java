@@ -85,7 +85,8 @@ public class Submit extends BaseCLI {
 		try {
 			String jobid = client.submitJob(name, StringUtils.readFile(script), procs, mem, stderr, stdout, cwd, env, ListUtils.build(deps.split(",")));
 			System.out.println(jobid);
-		} catch (ClientException | IOException e) {
+			client.close();
+		} catch (ClientException | IOException | AuthException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}
