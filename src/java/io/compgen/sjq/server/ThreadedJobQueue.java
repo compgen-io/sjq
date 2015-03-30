@@ -1,8 +1,8 @@
 package io.compgen.sjq.server;
 
-import io.compgen.support.MonitoredThread;
-import io.compgen.support.StringUtils;
-import io.compgen.support.TallyValues;
+import io.compgen.common.MonitoredThread;
+import io.compgen.common.StringUtils;
+import io.compgen.common.TallyValues;
 
 import java.io.File;
 import java.util.ArrayDeque;

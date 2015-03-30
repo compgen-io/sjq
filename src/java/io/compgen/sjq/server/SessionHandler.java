@@ -1,6 +1,6 @@
 package io.compgen.sjq.server;
 
-import io.compgen.support.StringUtils;
+import io.compgen.common.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

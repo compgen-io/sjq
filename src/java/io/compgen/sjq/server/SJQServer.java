@@ -4,7 +4,7 @@ import io.compgen.cmdline.annotation.Command;
 import io.compgen.cmdline.annotation.Exec;
 import io.compgen.cmdline.annotation.Option;
 import io.compgen.cmdline.exceptions.CommandArgumentException;
-import io.compgen.support.StringUtils;
+import io.compgen.common.StringUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -127,7 +127,7 @@ public class SJQServer {
 	@Exec
 	public void start() throws CommandArgumentException, SJQServerException, IOException {
 		if (pidfile != null) {
-			StringUtils.writeFile(pidfile, System.getProperty("io.compgen.support.pid"));
+			StringUtils.writeFile(pidfile, System.getProperty("io.compgen.common.pid"));
 			new File(pidfile).deleteOnExit();
 		}
 				

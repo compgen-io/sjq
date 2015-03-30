@@ -1,6 +1,6 @@
 package io.compgen.sjq.server;
 
-import io.compgen.support.MonitoredThread;
+import io.compgen.common.MonitoredThread;
 
 import java.io.File;
 import java.io.FileOutputStream;

@@ -3,7 +3,7 @@ package io.compgen.sjq.client;
 import io.compgen.cmdline.annotation.Exec;
 import io.compgen.cmdline.annotation.Option;
 import io.compgen.cmdline.exceptions.CommandArgumentException;
-import io.compgen.support.StringUtils;
+import io.compgen.common.StringUtils;
 
 import java.io.File;
 import java.io.IOException;

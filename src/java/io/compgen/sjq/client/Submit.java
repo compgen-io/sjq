@@ -3,8 +3,8 @@ package io.compgen.sjq.client;
 import io.compgen.cmdline.annotation.Command;
 import io.compgen.cmdline.annotation.Option;
 import io.compgen.cmdline.annotation.UnnamedArg;
-import io.compgen.support.ListBuilder;
-import io.compgen.support.StringUtils;
+import io.compgen.common.ListBuilder;
+import io.compgen.common.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
