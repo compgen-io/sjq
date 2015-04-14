@@ -27,8 +27,11 @@ public class SessionHandler implements Runnable {
 		while (!closed) {
 			try {
 				String s = readLine();
-				if (s == null || s.equals("")) {
+				if (s == null) {
 					break;
+				}
+				if (s.equals("")) {
+					continue;
 				}
 				
 				String[] line = s.split(" ", 2);
@@ -106,38 +109,43 @@ public class SessionHandler implements Runnable {
 					break;
 					case "DETAIL":
 						{
-							String jobId = line[1];
-							Job job = server.getQueue().getJob(jobId);
-							if (job != null) {
-								writeLine("OK "+jobId+" "+job.getState().getCode());
-								writeLine("PROCS " + job.getProcs());
-								if (job.getMem() > 0) {
-									writeLine("MEM " + job.getMem());
-								}
-								
-								writeLine("CWD " + job.getCwdDefault());
-								if (job.getEnv() != null) {
-									for (String k: job.getEnv().keySet()) {
-										writeLine("ENV " + k +"="+job.getEnv().get(k));
+							if (line.length>1) {
+								String jobId = line[1];
+								Job job = server.getQueue().getJob(jobId);
+								if (job != null) {
+									writeLine("OK "+jobId+" "+job.getState().getCode());
+									writeLine("PROCS " + job.getProcs());
+									if (job.getMem() > 0) {
+										writeLine("MEM " + job.getMem());
 									}
-								}
-								if (job.getStdout()!=null) {
-									writeLine("STDOUT " + job.getStdout());
-								}
-								if (job.getStderr()!=null) {
-									writeLine("STDERR " + job.getStderr());
-								}
-								writeLine("SUBMIT " + job.getSubmitTime());
-								if (job.getStartTime() > 0) {
-									writeLine("START " + job.getStartTime());
-									if (job.getEndTime()>0) {
-										writeLine("END " + job.getEndTime());
-										writeLine("RETCODE " + job.getRetCode());
+									
+									writeLine("CWD " + job.getCwdDefault());
+									if (job.getEnv() != null) {
+										for (String k: job.getEnv().keySet()) {
+											writeLine("ENV " + k +"="+job.getEnv().get(k));
+										}
 									}
+									if (job.getStdout()!=null) {
+										writeLine("STDOUT " + job.getStdout());
+									}
+									if (job.getStderr()!=null) {
+										writeLine("STDERR " + job.getStderr());
+									}
+									writeLine("SUBMIT " + job.getSubmitTime());
+									if (job.getStartTime() > 0) {
+										writeLine("START " + job.getStartTime());
+										if (job.getEndTime()>0) {
+											writeLine("END " + job.getEndTime());
+											writeLine("RETCODE " + job.getRetCode());
+										}
+									}
+									writeLine("OK");
+								} else {
+									writeLine("ERROR "+jobId+" not found!");
 								}
-								writeLine("OK");
 							} else {
-								writeLine("ERROR "+jobId+" not found!");
+								writeLine(server.getQueue().getServerStatus());
+								writeLine("OK");
 							}
 						}
 						break;
@@ -259,6 +267,12 @@ public class SessionHandler implements Runnable {
 			if (s.endsWith("\n")) {
 				break;
 			}
+		}
+		
+		if (b == -1) {
+			// socket is closed...
+			close();
+			return null;
 		}
 
 		if (s.endsWith("\r\n")) {

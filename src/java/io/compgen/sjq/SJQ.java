@@ -13,19 +13,19 @@ import io.compgen.sjq.server.SJQServer;
 public class SJQ {
 	public static void main(String[] args) throws Exception {
 		new MainBuilder()
-			.setProgName("sjq")
-			.setHelpHeader("SJQ - Simple Job Queue\n---------------------------------------")
-			.setDefaultUsage("Usage: sjq cmd [options]")
-			.setHelpFooter("http://compgen.io/sjq\n"+MainBuilder.readFile("VERSION"))
-			.setCategoryOrder(new String[]{"server", "client", "help"})
-			.addCommand(Help.class)
-			.addCommand(License.class)
-			.addCommand(SJQServer.class)
-			.addCommand(Status.class)
-			.addCommand(Ping.class)
-			.addCommand(Submit.class)
-			.addCommand(Kill.class)
-			.addCommand(Shutdown.class)
-			.findAndRun(args);
+		.setProgName("sjq")
+		.setHelpHeader("SJQ - Simple Job Queue\n---------------------------------------")
+		.setDefaultUsage("Usage: sjq cmd [options]")
+		.setHelpFooter("http://compgen.io/sjq\n"+MainBuilder.readFile("VERSION"))
+		.setCategoryOrder(new String[]{"server", "client", "help"})
+		.addCommand(Help.class)
+		.addCommand(License.class)
+		.addCommand(SJQServer.class)
+		.addCommand(Status.class)
+		.addCommand(Ping.class)
+		.addCommand(Submit.class)
+		.addCommand(Kill.class)
+		.addCommand(Shutdown.class)
+		.findAndRun(args);
 	}
 }

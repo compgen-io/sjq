@@ -2,7 +2,7 @@
 
 if [ "$1" == "daemon" ]; then
     if [ "$2" == "server" ]; then
-        echo "Starting server as a background daemon..."
+        echo "Starting SJQ server as a background daemon..."
         shift
         ($0 $@ <&- &>/dev/null &) &
         exit

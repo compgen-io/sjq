@@ -23,8 +23,9 @@ public class RunningJob {
 	
 	public void start() {
 		final File script;
+		final File monitorFile;
 		try {
-			script = File.createTempFile("sjq-"+job.getJobId(), ".sh", queue.getTempDir());
+			script = File.createTempFile("sjq-"+job.getJobId()+"-", ".sh", queue.getTempDir());
 			script.createNewFile();
 			script.setExecutable(false, false);
 			script.setReadable(false, false);
@@ -32,9 +33,35 @@ public class RunningJob {
 			script.setExecutable(true, true);
 			script.setReadable(true, true);
 			script.setWritable(true, true);
+			script.deleteOnExit();
+
 			OutputStream os = new FileOutputStream(script);
 			os.write(job.getBody().getBytes());
 			os.close();
+
+			monitorFile = File.createTempFile("sjq-"+job.getJobId()+"-", ".monitor.sh", queue.getTempDir());
+			monitorFile.createNewFile();
+			monitorFile.setExecutable(false, false);
+			monitorFile.setReadable(false, false);
+			monitorFile.setWritable(false, false);
+			monitorFile.setExecutable(true, true);
+			monitorFile.setReadable(true, true);
+			monitorFile.setWritable(true, true);
+			monitorFile.deleteOnExit();
+			
+			String monitorScript = "#!/bin/sh\n"+
+					"trap 'pkill -TERM -P $PID; exit 127' INT TERM EXIT\n" +
+					script.getAbsolutePath() + " & \n" +
+					"PID=$!\n" +
+					"wait $PID\n"+
+					"RETVAL=$?\n"+
+					"trap - INT TERM EXIT\n" +
+					"wait\nexit $RETVAL\n";
+					
+			OutputStream monOS = new FileOutputStream(monitorFile);
+			monOS.write(monitorScript.getBytes());
+			monOS.close();
+
 		} catch (IOException e) {
 			queue.jobDone(job.getJobId(), 1000);
 			return;
@@ -66,29 +93,32 @@ public class RunningJob {
 					stderr = new File(job.getName()+"."+job.getJobId()+".stderr");
 				}
 				
-				
 				try {
 					ProcessBuilder pb = new ProcessBuilder()
-						.command(script.getAbsolutePath())
+						.command(monitorFile.getAbsolutePath())
 						.directory(new File(job.getCwdDefault()))
 						.redirectOutput(stdout)
 						.redirectError(stderr);					
 					
+					Map<String, String> env = pb.environment();
 					if (job.getEnv() != null) {
-						Map<String, String> env = pb.environment();
 						env.clear();
 						env.putAll(job.getEnv());
 					}
+					env.put("JOB_ID", job.getJobId());
 					
 					proc = pb.start();
 					retcode = proc.waitFor();
+					proc.waitFor();
 					
 				} catch (IOException | InterruptedException e) {
+					e.printStackTrace();
 					retcode = 100;
 				}
 				
 				queue.jobDone(job.getJobId(), retcode);
 				script.delete();
+				monitorFile.delete();
 			}
 		};
 		runningThread.start();
@@ -96,8 +126,17 @@ public class RunningJob {
 	}
 	
 	public void kill() {
+		queue.getServer().log("Process kill - " + job.getJobId() + " start");
+		
+		// Note: This may not work correctly - Java won't kill any subprocesses.
 		proc.destroy();
-		runningThread.interrupt();
+
+		try {
+ 			runningThread.join();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		queue.getServer().log("Process kill - " + job.getJobId() + " done");
 	}
 
 }

@@ -15,7 +15,7 @@ import java.util.List;
 
 public class ThreadedSocketListener {
 	protected int port = 0;
-	protected String socketFilename = null;
+	protected File connFile = null;
 	protected String listenIP = null;
 	protected String passwd = null;
 	
@@ -27,11 +27,11 @@ public class ThreadedSocketListener {
 	
 	private MonitoredThread thread = null;
 	
-	public ThreadedSocketListener(SJQServer server, String listenIP, int port, String socketFilename, String passwd) {
+	public ThreadedSocketListener(SJQServer server, String listenIP, int port, File connFile, String passwd) {
 		this.server = server;
 		this.listenIP = listenIP;
 		this.port = port;
-		this.socketFilename = socketFilename;
+		this.connFile = connFile;
 		this.passwd = passwd;
 	}
 	
@@ -39,9 +39,8 @@ public class ThreadedSocketListener {
 		if (!closed) {
 			closed = true;
 
-			if (socketFilename != null) {
-				File f = new File(socketFilename);
-				f.delete();
+			if (connFile != null) {
+				connFile.delete();
 			}
 			
 			for (SessionHandler sh: sessions) {
@@ -69,20 +68,22 @@ public class ThreadedSocketListener {
 			socket.setReuseAddress(true);
 			closed = false;
 	
-			if (socketFilename != null) {
-				final File f = new File(socketFilename);
-				f.createNewFile();
-				f.setReadable(false,  false);
-				f.setWritable(false,  false);
-				f.setExecutable(false,  false);
-				f.setReadable(true,  true);
-				f.setWritable(true,  true);
+			if (connFile != null) {
+				if (connFile.exists()) {
+					connFile.delete();
+				}
+				connFile.createNewFile();
+				connFile.setReadable(false,  false);
+				connFile.setWritable(false,  false);
+				connFile.setExecutable(false,  false);
+				connFile.setReadable(true,  true);
+				connFile.setWritable(true,  true);
 
-				OutputStream os = new FileOutputStream(f);
+				OutputStream os = new FileOutputStream(connFile);
 				os.write((getSocketAddr()+"\n").getBytes());
 				os.close();
 
-				f.deleteOnExit();
+				connFile.deleteOnExit();
 			}
 		} catch (IOException e) {
 			server.log("Error starting socket listener! " + e.getMessage());
@@ -115,14 +116,14 @@ public class ThreadedSocketListener {
 		return true;
 	}
 
-	public void setListenHost(String host) {
-		this.listenIP = host;
-	}
-
-	public void setListenFilename(String portFilename) {
-		this.socketFilename = portFilename;	
-	}
-
+//	public void setListenHost(String host) {
+//		this.listenIP = host;
+//	}
+//
+//	public void setConnFile(String connFile) {
+//		this.connFile = portFilename;
+//	}
+//
 	public String getSocketAddr() {
 		if (socket != null) {
 			return socket.getInetAddress().getHostAddress()+":"+socket.getLocalPort();

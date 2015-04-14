@@ -9,12 +9,12 @@ public class Status extends BaseCLI {
 	private String jobId = null;
 	private boolean verbose = false;
 
-	@UnnamedArg(name="jobid", required=false)
+	@UnnamedArg(name="job-id", required=false)
 	public void setJobId(String jobId) {
 		this.jobId = jobId;
 	}
 
-	@Option(charName="v")
+	@Option(charName="v", desc="Verbose status")
 	public void setVerbose(boolean val) {
 		this.verbose = val;
 	}
@@ -24,6 +24,8 @@ public class Status extends BaseCLI {
 		try {
 			if (verbose && jobId != null) {
 				client.getDetailedStatus(jobId, System.out);
+			} else if (verbose) {
+				client.getDetailedStatus(System.out);
 			} else {
 				System.out.println(client.getStatus(jobId));
 			}

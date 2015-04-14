@@ -5,10 +5,14 @@ import io.compgen.common.StringUtils;
 import io.compgen.common.TallyValues;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ThreadedJobQueue {
@@ -29,7 +33,7 @@ public class ThreadedJobQueue {
 	
 	public Deque<Job> pending = new ArrayDeque<Job>();
 	public Map<String, RunningJob> running = new LinkedHashMap<String, RunningJob>();
-	public Map<String, Job> jobs = new HashMap<String, Job>();
+	public Map<String, Job> jobs = new LinkedHashMap<String, Job>();
 	
 	private boolean closing = false;
 	private MonitoredThread procThread = null;
@@ -54,8 +58,13 @@ public class ThreadedJobQueue {
 		if (!closing) {
 			closing = true;
 			procThread.interrupt();
-			for (RunningJob run:running.values()) {
-				run.kill();
+			List<String> runningJobIds = new ArrayList<String>();
+			for (RunningJob runningjob:running.values()) {
+				server.log("Currently running job: "+runningjob.getJob().getJobId());
+				runningJobIds.add(runningjob.getJob().getJobId());
+			}
+			for (String jobId: runningJobIds) {
+				killJob(jobId);
 			}
 			server.log("Shutdown job queue...");
 		}
@@ -111,6 +120,29 @@ public class ThreadedJobQueue {
 		System.err.println("-------------------------");
 	}
 	
+	public String getServerStatus() {
+		String out = "";
+		for (Job job: server.getQueue().jobs.values()) {
+			if (!out.equals("")) {
+				out += "\n";
+			}
+			List<String> outs = new ArrayList<String>();
+			outs.add(job.getJobId());
+			outs.add(job.getName());
+			outs.add(job.getState().getCode());
+			outs.add(""+ThreadedJobQueue.timestampToString(job.getSubmitTime()));
+			if (job.getState() == JobState.RUNNING) {
+				outs.add(""+ThreadedJobQueue.timestampToString(job.getStartTime()));
+			} else if (job.getState() == JobState.SUCCESS || job.getState() == JobState.ERROR) {
+				outs.add(""+ThreadedJobQueue.timestampToString(job.getStartTime()));
+				outs.add(""+ThreadedJobQueue.timestampToString(job.getEndTime()));
+				outs.add(""+job.getRetCode());
+			}
+			out += StringUtils.join("\t", outs);
+		}
+		return out;
+	}
+	
 	public String getStatus() {
 		TallyValues<String> counter = new TallyValues<String>();
 		for (Job job: jobs.values()) {
@@ -160,6 +192,9 @@ public class ThreadedJobQueue {
 	}
 
 	private void runJob(Job job) {
+		if (closing) {
+			return;
+		}
 		server.log("Starting job - "+ job.getJobId());
 		job.setState(JobState.RUNNING);
 		job.setStartTime(System.currentTimeMillis());
@@ -183,18 +218,27 @@ public class ThreadedJobQueue {
 		pending.add(job);
 		emptyCheck = -1;
 
-		server.log("New job: "+ jobId);
+		server.log("New job: "+ jobId+ " "+job.getName());
 		procThread.interrupt();
 		return jobId;
 	}
 
 	public boolean killJob(String jobId) {
-		if (running.containsKey(jobId)) {
-			running.get(jobId).kill();
+		Job job = jobs.get(jobId);
+		
+		if (job == null) {
+			return false;
 		}
 		
-		Job job = jobs.get(jobId);
-		if (job != null && (job.getState() == JobState.HOLD || job.getState() == JobState.QUEUED || job.getState() == JobState.RUNNING)) {
+		if (running.containsKey(jobId)) {
+			server.log("Killing job: " + jobId);
+			running.get(jobId).kill();
+			job.setState(JobState.KILLED);
+			server.log("Job killed: " + jobId);
+			return true;
+		}
+		
+		if (job != null && (job.getState() == JobState.HOLD || job.getState() == JobState.QUEUED)) {
 			job.setState(JobState.KILLED);
 			server.log("Job killed: " + jobId);
 			return true;
@@ -254,6 +298,10 @@ public class ThreadedJobQueue {
 		}
 	}
 
+    public static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	public static String timestampToString(long ts) {
+	    return dateFormat.format(new Date(ts));
+	}
 	public static String timespanToString(long timeSpanMillis) {
 		String s = "";
 		
@@ -296,5 +344,9 @@ public class ThreadedJobQueue {
 		}
 		
 		return s;
+	}
+
+	public SJQServer getServer() {
+		return server;
 	}
 }

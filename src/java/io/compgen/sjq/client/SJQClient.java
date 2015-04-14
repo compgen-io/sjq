@@ -15,15 +15,23 @@ public class SJQClient {
 	private boolean closed = false;
 	private String passwd = null;
 	private boolean isauth = false;
+	private boolean verbose = false;
 	
 	public SJQClient(String host, int port, String passwd) throws UnknownHostException, IOException {
 		this.socket = new Socket(host, port);
 		this.passwd = passwd;
 	}
 	
+	public void setVerbose(boolean val) {
+		this.verbose = val;
+	}
+	
 	protected void writeLine(String s) throws IOException {
 		if (closed) {
 			throw new IOException("Socket closed");
+		}
+		if (verbose) {
+			System.err.println("<<< " +s);
 		}
 		OutputStream os = this.socket.getOutputStream();
 		os.write((s+"\r\n").getBytes());
@@ -33,6 +41,9 @@ public class SJQClient {
 	protected void writeBytes(byte[] bytes) throws IOException {
 		if (closed) {
 			throw new IOException("Socket closed");
+		}
+		if (verbose) {
+			System.err.println("<<< <" +bytes.length+" bytes>");
 		}
 		OutputStream os = this.socket.getOutputStream();
 		os.write(bytes);
@@ -58,6 +69,9 @@ public class SJQClient {
 		} else if (s.endsWith("\n")) {
 			s = s.substring(0, s.length()-1);
 		}
+		if (verbose) {
+			System.err.println(">>> " +s);
+		}
 		return s;
 	}
 
@@ -77,6 +91,9 @@ public class SJQClient {
 			} else {
 				read += s;
 			}
+		}
+		if (verbose) {
+			System.err.println("<<< <" +bytes+" bytes>");
 		}
 		return new String(buf, 0, bytes);
 	}
@@ -101,11 +118,19 @@ public class SJQClient {
 		if (closed) {
 			throw new ClientException("Closed connection");
 		}
+		
+		if (isauth) {
+			return;
+		}
+		
 		try {
 			writeLine("AUTH "+this.passwd);
 			String result = readLine();
 			if (!result.equals("OK AUTH")) {
 				throw new AuthException(result);
+			}
+			if (verbose) {
+				System.err.println("Authentication successful!");
 			}
 			this.isauth = true;
 		} catch (IOException e) {
@@ -222,6 +247,9 @@ public class SJQClient {
 		if (closed) {
 			throw new ClientException("Closed connection");
 		}
+		if (verbose) {
+			System.err.println("Submitting job: "+job.getName());
+		}
 		try {
 			writeLine("SUBMIT " + job.getName());
 			writeLine("PROCS " + job.getProcs());
@@ -268,7 +296,9 @@ public class SJQClient {
 			throw new ClientException(e);
 		}
 	}
-
+	public void getDetailedStatus(PrintStream out) throws ClientException, AuthException {
+		getDetailedStatus(null, out);
+	}
 	public void getDetailedStatus(String jobId, PrintStream out) throws ClientException, AuthException {
 		if (!isauth) {
 			auth();
@@ -277,15 +307,18 @@ public class SJQClient {
 			throw new ClientException("Closed connection");
 		}
 		try {
-			writeLine("DETAIL "+jobId);
+			if (jobId != null) {
+				writeLine("DETAIL "+jobId);
+			} else {
+				writeLine("DETAIL");
+			}
 			String result = readLine();
-			while (!result.equals("OK") && !result.equals("")) {
+			while (!result.equals("OK") && !result.equals("") && !result.startsWith("ERROR ")) {
 				out.println(result);
 				result = readLine();
 			}
 		} catch (IOException e) {
 			throw new ClientException(e);
-		}
-		
+		}		
 	}
 }
