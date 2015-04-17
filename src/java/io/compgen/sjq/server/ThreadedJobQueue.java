@@ -133,10 +133,14 @@ public class ThreadedJobQueue {
 			outs.add(""+ThreadedJobQueue.timestampToString(job.getSubmitTime()));
 			if (job.getState() == JobState.RUNNING) {
 				outs.add(""+ThreadedJobQueue.timestampToString(job.getStartTime()));
+				outs.add(""+ThreadedJobQueue.timespanToString(System.currentTimeMillis() - job.getStartTime()));
 			} else if (job.getState() == JobState.SUCCESS || job.getState() == JobState.ERROR) {
 				outs.add(""+ThreadedJobQueue.timestampToString(job.getStartTime()));
 				outs.add(""+ThreadedJobQueue.timestampToString(job.getEndTime()));
 				outs.add(""+job.getRetCode());
+				outs.add(""+ThreadedJobQueue.timespanToString(job.getEndTime() - job.getStartTime()));
+			} else {
+				outs.add(""+ThreadedJobQueue.timespanToString(System.currentTimeMillis() - job.getSubmitTime()));
 			}
 			out += StringUtils.join("\t", outs);
 		}
@@ -314,10 +318,10 @@ public class ThreadedJobQueue {
 		long secs = timeSpanMillis / 1000;
 
 		if (hours > 0) {
-		s += hours +":";
+			s += hours +":";
 		}
 
-		if (mins > 10) {
+		if (mins > 9) {
 			s += mins +":";
 		} else if (mins > 0) {
 			if (!s.equals("")) {
@@ -328,9 +332,11 @@ public class ThreadedJobQueue {
 			if (!s.equals("")) {
 				s += "00:";
 			}
+		} else {
+			s += "0:";
 		}
 
-		if (secs > 10) {
+		if (secs > 9) {
 			s += secs;
 		} else if (secs > 0) {
 			if (!s.equals("")) {
