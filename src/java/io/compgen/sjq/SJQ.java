@@ -16,7 +16,7 @@ public class SJQ {
 		.setProgName("sjq")
 		.setHelpHeader("SJQ - Simple Job Queue\n---------------------------------------")
 		.setDefaultUsage("Usage: sjq cmd [options]")
-		.setHelpFooter("http://compgen.io/sjq\n"+MainBuilder.readFile("VERSION"))
+		.setHelpFooter("http://compgen.io/sjq\n"+MainBuilder.readFile("io/compgen/sjq/VERSION"))
 		.setCategoryOrder(new String[]{"server", "client", "help"})
 		.addCommand(Help.class)
 		.addCommand(License.class)

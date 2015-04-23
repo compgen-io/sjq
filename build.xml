@@ -39,15 +39,18 @@
 	<target name="jar" depends="compile, git.revision">
         <copy file="LICENSE" todir="${build.dir}/classes/"/>
         <copy file="INCLUDES" todir="${build.dir}/classes/"/>
-        <delete file="${build.dir}/classes/VERSION"/>
-        <echo file="${build.dir}/classes/VERSION" message="${ant.project.name}-${version}-${repository.version}"/>
+        <delete file="${build.dir}/classes/io/compgen/sjq/VERSION"/>
+        <echo file="${build.dir}/classes/io/compgen/sjq/VERSION" message="${ant.project.name}-${version}-${repository.version}"/>
         <copy todir="${build.dir}/classes/io/compgen/sjq">
             <fileset file="${src.dir}/java/io/compgen/sjq/USAGE.txt"/>
         </copy>
 
 		<mkdir dir="${dist.dir}"/>
 	    <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${blib.dir}/jarjar-1.4.jar"/>
-        <jar destfile="${dist.dir}/${ant.project.name}-${version}.jar" basedir="${build.dir}/classes"/>
+        <jar destfile="${dist.dir}/${ant.project.name}-${version}.jar">
+            <fileset dir="${build.dir}/classes"/>
+            <fileset dir="${src.dir}/java" includes="**/*.java"/>
+        </jar>
 	    <jarjar jarfile="${dist.dir}/${ant.project.name}.jar.tmp">
             <manifest>
                 <attribute name="Main-Class" value="io.compgen.sjq.SJQ"/>
@@ -55,6 +58,7 @@
 	        <fileset dir="${build.dir}/classes"/>
             <zipfileset src="${lib.dir}/compgen-cmdline-0.4.1.jar"/>
             <zipfileset src="${lib.dir}/compgen-common-0.1.jar"/>
+            <zap pattern="*.java"/>
 	    </jarjar>
         <delete file="${dist.dir}/${project.name}"/>
  		<concat destfile="${dist.dir}/${ant.project.name}" binary="true">
