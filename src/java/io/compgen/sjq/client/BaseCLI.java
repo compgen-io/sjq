@@ -87,5 +87,5 @@ public abstract class BaseCLI {
 		process(client);
 	}
 
-	protected abstract void process(SJQClient client);
+	protected abstract void process(SJQClient client) throws Exception;
 }

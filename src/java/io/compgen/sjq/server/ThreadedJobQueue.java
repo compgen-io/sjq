@@ -355,4 +355,20 @@ public class ThreadedJobQueue {
 	public SJQServer getServer() {
 		return server;
 	}
+
+	public boolean releaseJob(String jobId) {
+		Job job = jobs.get(jobId);
+		
+		if (job == null) {
+			return false;
+		}
+		
+		if (job != null && (job.getState() == JobState.USERHOLD)) {
+			job.setState(JobState.HOLD);
+			server.log("Job released from user-hold: " + jobId);
+			procThread.interrupt();
+			return true;
+		}
+		return false;
+	}
 }

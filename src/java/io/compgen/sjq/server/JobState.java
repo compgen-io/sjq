@@ -3,6 +3,7 @@ package io.compgen.sjq.server;
 public enum JobState {
 	UNKNOWN("?"),
 	HOLD("H"),
+	USERHOLD("U"),
 	QUEUED("Q"),
 	RUNNING("R"),
 	SUCCESS("S"),

@@ -107,6 +107,19 @@ public class SessionHandler implements Runnable {
 						}
 					}
 					break;
+					case "RELEASE":
+					{
+						if (line.length == 2 && line[1] != null && !line[1].equals("")) {
+							String jobId = line[1];
+	//						System.err.println("Looking for job: "+jobId);
+							if (server.getQueue().releaseJob(jobId)) {
+								writeLine("OK "+jobId+" RELEASED");
+							} else {
+								writeLine("ERROR "+jobId+" not found or already released!");
+							}
+						}
+					}
+					break;
 					case "DETAIL":
 						{
 							if (line.length>1) {

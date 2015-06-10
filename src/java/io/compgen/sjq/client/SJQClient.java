@@ -1,6 +1,7 @@
 package io.compgen.sjq.client;
 
 import io.compgen.sjq.server.Job;
+import io.compgen.sjq.server.JobState;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -210,9 +211,30 @@ public class SJQClient {
 		}
 	}
 
-	public String submitJob(String name, String body, int procs, String mem, String stderr, String stdout, String cwd, Map<String, String> env, Iterable<String> deps) throws ClientException, AuthException {	
+	public String releaseJob(String jobId) throws ClientException, AuthException {
+		if (!isauth) {
+			auth();
+		}
+		if (closed) {
+			throw new ClientException("Closed connection");
+		}
+		try {
+			writeLine("RELEASE "+jobId);
+			String result = readLine();
+			if (!result.startsWith("OK ")) {
+				throw new ClientException(result);
+			}
+			return result.substring(3);
+		} catch (IOException e) {
+			throw new ClientException(e);
+		}
+	}
+
+	public String submitJob(String name, String body, int procs, String mem, String stderr, String stdout, String cwd, Map<String, String> env, Iterable<String> deps, boolean userHold) throws ClientException, AuthException {	
 		Job job = new Job(name);
-		job.setProcs(procs);
+		if (procs > 0) {
+			job.setProcs(procs);
+		}
 		if (mem != null) {
 			job.setMem(mem);
 		}
@@ -227,6 +249,9 @@ public class SJQClient {
 		}
 		if (env != null) {
 			job.setEnv(env);
+		}
+		if (userHold) {
+			job.setUserHold();
 		}
 		if (deps != null) {
 			for (String dep: deps){
@@ -252,7 +277,9 @@ public class SJQClient {
 		}
 		try {
 			writeLine("SUBMIT " + job.getName());
-			writeLine("PROCS " + job.getProcs());
+			if (job.getProcs() > 0) {
+				writeLine("PROCS " + job.getProcs());
+			}
 			if (job.getMem() > 0) {
 				writeLine("MEM " + job.getMem());
 			}
@@ -283,6 +310,10 @@ public class SJQClient {
 				}
 			}
 
+			if (job.getState() == JobState.USERHOLD) {
+				writeLine("HOLD");
+			}
+			
 			writeLine("BODY " + job.getBody().length());
 			writeBytes(job.getBody().getBytes());
 			

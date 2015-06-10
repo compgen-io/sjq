@@ -77,15 +77,14 @@ public class Job {
 	}
 
 	public int getProcs() {
-		return procs;
+		if (procs > 0) {
+			return procs;
+		}
+		return 1;
 	}
 
 	public void setProcs(int procs) {
-		if (procs < 1) {
-			this.procs = 1;
-		} else {
-			this.procs = procs;
-		}
+		this.procs = procs;
 	}
 
 	public long getMem() {
@@ -178,6 +177,10 @@ public class Job {
 
 	public void setEnv(Map<String, String> env) {
 		this.env = env;
+	}
+
+	public void setUserHold() {
+		this.state = JobState.USERHOLD;
 	}
 }
 

@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Date;
 
-@Command(name="server", category="server", desc="Start up SJQ in server mode")
+@Command(name="server", category="server", desc="Start an SJQ server")
 public class SJQServer {
 	private ThreadedSocketListener threadedSocketListener = null;
 	private ThreadedJobQueue threadedJobQueue = null;

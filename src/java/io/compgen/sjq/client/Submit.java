@@ -4,19 +4,21 @@ import io.compgen.cmdline.annotation.Command;
 import io.compgen.cmdline.annotation.Option;
 import io.compgen.cmdline.annotation.UnnamedArg;
 import io.compgen.common.ListBuilder;
+import io.compgen.common.StringLineReader;
 import io.compgen.common.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-@Command(name="submit", desc="Submit a new job", category="client")
+@Command(name="submit", desc="Submit a new job", category="client", doc="In addition to setting command-line parameters, ")
 public class Submit extends BaseCLI {
 	private String name=null;
 	private String script=null;
 	
-	private int procs = 1;
+	private int procs = -1;
 	private String mem=null;
+	private boolean userHold=false;
 	private Map<String, String> env = null;
 	
 	private String cwd=null;
@@ -35,19 +37,24 @@ public class Submit extends BaseCLI {
 		this.name = name;
 	}
 
-	@Option(name="procs", charName="c", desc="Required processors (default: 1)")
+	@Option(name="procs", charName="N", desc="Required processors (default: 1)")
 	public void setProcs(int procs) {
 		this.procs = procs;
 	}
 
-	@Option(name="mem", charName="m", desc="Max memory, ex: 2G (default: not used)")
+	@Option(name="mem", charName="m", desc="Max memory, ex: '2G' (default: not used)")
 	public void setMem(String mem) {
 		this.mem = mem;
 	}
 
 	@Option(name="cwd", desc="Job working directory (default: current directory)")
 	public void setCwd(String cwd) {
-		this.cwd = cwd;
+		this.cwd = new File(cwd).getAbsolutePath();
+	}
+
+	@Option(name="hold", desc="Set a user-hold on job")
+	public void setUserHold(boolean userHold) {
+		this.userHold = userHold;
 	}
 
 	@Option(name="stderr", charName="e", desc="Redirect stderr to file (default: jobname.jobid.stderr)")
@@ -73,7 +80,7 @@ public class Submit extends BaseCLI {
 	}
 	
 	@Override
-	protected void process(SJQClient client) {
+	protected void process(SJQClient client) throws IOException {
 		if (name == null) {
 			if (script.equals("-")) {
 				name = "stdin";
@@ -82,8 +89,61 @@ public class Submit extends BaseCLI {
 			}
 		}
 		
+		for (String line: new StringLineReader(script)) {
+			if (line.startsWith("#$")) {
+				line = StringUtils.strip(line).substring(2);
+				String[] cmds = line.split(" ", 2);
+				switch (cmds[0]) {
+				case "N":
+					if (procs == -1) {
+						setProcs(Integer.parseInt(cmds[1]));
+					}
+					break;
+				case "n":
+					if (name == null) {
+						setName(cmds[1]);
+					}
+					break;
+				case "m":
+					if (mem == null) {
+						setMem(cmds[1]);
+					}
+					break;
+				case "cwd":
+					if (cwd == null) {
+						setCwd(cmds[1]);
+					}
+					break;
+				case "env":
+					if (env == null) {
+						setEnv(true);
+					}
+				case "hold":
+					if (!userHold) {
+						setUserHold(true);
+					}
+					break;
+				case "e":
+					if (stderr == null) {
+						setStderr(cmds[1]);
+					}
+					break;
+				case "o":
+					if (stdout == null) {
+						setStdout(cmds[1]);
+					}
+					break;
+				case "deps":
+					if (deps == null) {
+						setDeps(cmds[1]);
+					}
+					break;
+				}
+			}
+		}
+		
 		try {
-			String jobid = client.submitJob(name, StringUtils.readFile(script), procs, mem, stderr, stdout, cwd, env, ListBuilder.build(deps.split(",")));
+			String jobid = client.submitJob(name, StringUtils.readFile(script), procs, mem, stderr, stdout, cwd, env, ListBuilder.build(deps.split(",")), userHold);
 			System.out.println(jobid);
 			client.close();
 		} catch (ClientException | IOException | AuthException e) {
