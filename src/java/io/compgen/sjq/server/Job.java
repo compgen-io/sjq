@@ -1,6 +1,6 @@
 package io.compgen.sjq.server;
 
-import java.nio.file.Paths;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -153,7 +153,7 @@ public class Job {
 		return cwd;
 	}
 	public String getCwdDefault() {
-		return (cwd != null) ? cwd : Paths.get("").toAbsolutePath().toString();
+		return (cwd != null) ? cwd : new File("").getAbsolutePath();
 	}
 
 	public void setCwd(String cwd) {

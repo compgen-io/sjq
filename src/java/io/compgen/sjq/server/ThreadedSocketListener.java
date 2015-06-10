@@ -67,7 +67,7 @@ public class ThreadedSocketListener {
 			}
 			socket.setReuseAddress(true);
 			closed = false;
-	
+
 			if (connFile != null) {
 				if (connFile.exists()) {
 					connFile.delete();

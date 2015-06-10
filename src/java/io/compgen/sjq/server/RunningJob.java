@@ -79,7 +79,7 @@ public class RunningJob {
 						stdout = new File(stdout, job.getName()+"."+job.getJobId()+".stdout");
 					}
 				} else {
-					stdout = new File(job.getName()+"."+job.getJobId()+".stdout");
+					stdout = new File(new File(job.getCwdDefault()), job.getName()+"."+job.getJobId()+".stdout");
 				}
 				
 				File stderr;
@@ -90,7 +90,7 @@ public class RunningJob {
 						stderr = new File(stderr, job.getName()+"."+job.getJobId()+".stderr");
 					}
 				} else {
-					stderr = new File(job.getName()+"."+job.getJobId()+".stderr");
+					stderr = new File(new File(job.getCwdDefault()), job.getName()+"."+job.getJobId()+".stderr");
 				}
 				
 				try {

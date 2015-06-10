@@ -21,7 +21,7 @@ public class Submit extends BaseCLI {
 	private boolean userHold=false;
 	private Map<String, String> env = null;
 	
-	private String cwd=null;
+	private String cwd=new File("").getAbsolutePath();
 	private String stdout=null;
 	private String stderr=null;
 
@@ -59,12 +59,12 @@ public class Submit extends BaseCLI {
 
 	@Option(name="stderr", charName="e", desc="Redirect stderr to file (default: jobname.jobid.stderr)")
 	public void setStderr(String stderr) {
-		this.stderr = stderr;
+		this.stderr = new File(stderr).getAbsolutePath();
 	}
 
 	@Option(name="stdout", charName="o", desc="Redirect stdout to file (default: jobname.jobid.stdout)")
 	public void setStdout(String stdout) {
-		this.stdout = stdout;
+		this.stdout = new File(stdout).getAbsolutePath();
 	}
 
 	@Option(name="deps", desc="Job dependencies (comma-delimited list)")
@@ -89,64 +89,72 @@ public class Submit extends BaseCLI {
 			}
 		}
 		
-		for (String line: new StringLineReader(script)) {
-			if (line.startsWith("#$")) {
-				line = StringUtils.strip(line).substring(2);
-				String[] cmds = line.split(" ", 2);
-				switch (cmds[0]) {
-				case "N":
-					if (procs == -1) {
-						setProcs(Integer.parseInt(cmds[1]));
+		String src;
+		
+		if (new File(script).exists()) {
+			src = StringUtils.readFile(script);
+			for (String line: new StringLineReader(script)) {
+				if (line.startsWith("#$")) {
+					line = StringUtils.strip(line).substring(2);
+					String[] cmds = line.split(" ", 2);
+					switch (cmds[0]) {
+					case "N":
+						if (procs == -1) {
+							setProcs(Integer.parseInt(cmds[1]));
+						}
+						break;
+					case "n":
+						if (name == null) {
+							setName(cmds[1]);
+						}
+						break;
+					case "m":
+						if (mem == null) {
+							setMem(cmds[1]);
+						}
+						break;
+					case "cwd":
+						if (cwd == null) {
+							setCwd(cmds[1]);
+						}
+						break;
+					case "env":
+						if (env == null) {
+							setEnv(true);
+						}
+					case "hold":
+						if (!userHold) {
+							setUserHold(true);
+						}
+						break;
+					case "e":
+						if (stderr == null) {
+							setStderr(cmds[1]);
+						}
+						break;
+					case "o":
+						if (stdout == null) {
+							setStdout(cmds[1]);
+						}
+						break;
+					case "deps":
+						if (deps == null) {
+							setDeps(cmds[1]);
+						}
+						break;
 					}
-					break;
-				case "n":
-					if (name == null) {
-						setName(cmds[1]);
-					}
-					break;
-				case "m":
-					if (mem == null) {
-						setMem(cmds[1]);
-					}
-					break;
-				case "cwd":
-					if (cwd == null) {
-						setCwd(cmds[1]);
-					}
-					break;
-				case "env":
-					if (env == null) {
-						setEnv(true);
-					}
-				case "hold":
-					if (!userHold) {
-						setUserHold(true);
-					}
-					break;
-				case "e":
-					if (stderr == null) {
-						setStderr(cmds[1]);
-					}
-					break;
-				case "o":
-					if (stdout == null) {
-						setStdout(cmds[1]);
-					}
-					break;
-				case "deps":
-					if (deps == null) {
-						setDeps(cmds[1]);
-					}
-					break;
 				}
 			}
+
+		} else {
+			src = script;
 		}
 		
 		try {
-			String jobid = client.submitJob(name, StringUtils.readFile(script), procs, mem, stderr, stdout, cwd, env, ListBuilder.build(deps.split(",")), userHold);
+			String jobid = client.submitJob(name, src, procs, mem, stderr, stdout, cwd, env, ListBuilder.build(deps.split(",")), userHold);
 			System.out.println(jobid);
 			client.close();
-		} catch (ClientException | IOException | AuthException e) {
+		} catch (ClientException | AuthException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}
