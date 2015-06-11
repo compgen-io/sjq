@@ -69,21 +69,14 @@ public abstract class BaseCLI {
 			}
 		}
 
+		Endpoint endpoint = new Endpoint(host, port);
 		if (connFile != null && connFile.exists()) {
-			String conn = null;
-			try {
-				conn = StringUtils.strip(StringUtils.readFile(connFile));
-			} catch (IOException e) {
-				throw new CommandArgumentException("Missing connection file.");
-			}
-			String[] hostport = conn.split(":",2);
-			host = hostport[0];
-			port = Integer.parseInt(hostport[1]);
+			endpoint = Endpoint.readFile(connFile);
 		}
 //		
 //		System.err.println("Connecting to: " + host + ":" + port);
 
-		SJQClient client = new SJQClient(host, port, passwd);
+		SJQClient client = new SJQClient(endpoint, passwd);
 		process(client);
 	}
 

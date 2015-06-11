@@ -5,6 +5,9 @@ import io.compgen.cmdline.annotation.Exec;
 import io.compgen.cmdline.annotation.Option;
 import io.compgen.cmdline.exceptions.CommandArgumentException;
 import io.compgen.common.StringUtils;
+import io.compgen.sjq.client.ClientException;
+import io.compgen.sjq.client.Endpoint;
+import io.compgen.sjq.client.SJQClient;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,7 +24,7 @@ public class SJQServer {
 	private boolean closed = false;
 
 	private int port = 0;
-	private String connFilename = null;
+	protected String connFilename = null;
 	private String host = "127.0.0.1";
 	private String pidfile = null;
 	private String passwd = "";
@@ -162,6 +165,12 @@ public class SJQServer {
 			connFile = new File(connFilename);
 		}
 		
+		if (checkConnection(connFile)) {
+			log("Connection file: "+connFile.getAbsolutePath()+" exists and is active!");
+			System.err.println("Connection file: "+connFile.getAbsolutePath()+" exists and is active!");
+			throw new SJQServerException("SJQ server already running!");
+		}
+		
 		if (pidfile != null) {
 			StringUtils.writeFile(pidfile, System.getProperty("io.compgen.common.pid"));
 			new File(pidfile).deleteOnExit();
@@ -196,6 +205,19 @@ public class SJQServer {
 		}
 	}
 	
+	protected boolean checkConnection(File connFile) {
+		if (connFile.exists()) {
+			try {
+				SJQClient client = new SJQClient(Endpoint.readFile(connFile), passwd);
+				boolean result = client.ping();
+				client.close();
+				return result;
+			} catch (IOException | ClientException e) {
+			}
+		} 
+		return false;
+	}
+
 	public ThreadedJobQueue getQueue() {
 		return threadedJobQueue;
 	}

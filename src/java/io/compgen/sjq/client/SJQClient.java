@@ -23,6 +23,10 @@ public class SJQClient {
 		this.passwd = passwd;
 	}
 	
+	public SJQClient(Endpoint endpoint, String passwd) throws UnknownHostException, IOException {
+		this(endpoint.host, endpoint.port, passwd);
+	}
+	
 	public void setVerbose(boolean val) {
 		this.verbose = val;
 	}

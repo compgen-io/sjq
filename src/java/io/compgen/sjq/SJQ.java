@@ -11,6 +11,7 @@ import io.compgen.sjq.client.Status;
 import io.compgen.sjq.client.Submit;
 import io.compgen.sjq.server.DaemonStub;
 import io.compgen.sjq.server.SJQServer;
+import io.compgen.sjq.server.SJQServerCheck;
 
 public class SJQ {
 	public static void main(String[] args) throws Exception {
@@ -23,6 +24,7 @@ public class SJQ {
 		.addCommand(Help.class)
 		.addCommand(License.class)
 		.addCommand(SJQServer.class)
+		.addCommand(SJQServerCheck.class)
 		.addCommand(DaemonStub.class)
 		.addCommand(Status.class)
 		.addCommand(Ping.class)

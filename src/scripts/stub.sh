@@ -1,8 +1,13 @@
 #!/bin/sh
 
 if [ "$1" == "daemon" ]; then
-        echo "Starting SJQ server as a background daemon..."
         shift
+        $0 server-check $@
+        if [ $? -ne 0 ]; then
+            echo "Unable to start SQL server..."
+            exit
+        fi 
+        echo "Starting SJQ server as a background daemon..."
         ($0 server $@ <&- &>/dev/null &) &
         exit
 fi
