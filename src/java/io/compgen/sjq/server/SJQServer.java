@@ -172,6 +172,13 @@ public class SJQServer {
 			throw new SJQServerException("SJQ server already running!");
 		}
 		
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+		    public void run() { 
+		    	shutdown();
+		    }
+		 });
+
+		
 		if (pidfile != null) {
 			StringUtils.writeFile(pidfile, System.getProperty("io.compgen.common.pid"));
 			new File(pidfile).deleteOnExit();
