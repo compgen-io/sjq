@@ -17,10 +17,12 @@ public class SJQClient {
 	private String passwd = null;
 	private boolean isauth = false;
 	private boolean verbose = false;
+	private String serverVersion = null;
 	
 	public SJQClient(String host, int port, String passwd) throws UnknownHostException, IOException {
 		this.socket = new Socket(host, port);
 		this.passwd = passwd;
+		this.serverVersion = readLine().split(" ")[1];
 	}
 	
 	public SJQClient(Endpoint endpoint, String passwd) throws UnknownHostException, IOException {
@@ -355,5 +357,9 @@ public class SJQClient {
 		} catch (IOException e) {
 			throw new ClientException(e);
 		}		
+	}
+	
+	public String getServerVersion() {
+		return serverVersion;
 	}
 }

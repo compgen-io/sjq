@@ -24,160 +24,157 @@ public class SessionHandler implements Runnable {
 	}
 
 	public void run() {
-		while (!closed) {
-			try {
-				String s = readLine();
-				if (s == null) {
-					break;
-				}
-				if (s.equals("")) {
-					continue;
-				}
-				
-				String[] line = s.split(" ", 2);
-				String cmd = line[0].toUpperCase();
-
-				if (!isauth) {
-					switch(cmd) {
-					case "QUIT":
-						writeLine("OK BYE!");
-						close();
+		try {
+			writeLine("SJQ " + SJQServer.VERSION);
+			while (!closed) {
+					String s = readLine();
+					if (s == null) {
 						break;
-					case "AUTH":
-						String passwd = "";
-						if (line.length == 2) {
-							passwd = line[1];
-						}
-						if (passwd.equals(this.passwd)) {
-							isauth = true;
-							writeLine("OK AUTH");
-						} else {
-							writeLine("ERROR WRONG PASSWORD");
-						}
-						break;
-					case "PING":
-						writeLine("OK PONG");
-						break;
-					case "HELP":
-						writeLine("OK Valid Commands: QUIT PING AUTH HELP");
-						break;
-					default:
-						writeLine("ERROR AUTH");
 					}
-				} else {
-					switch(cmd){
-					case "QUIT":
-						writeLine("OK BYE!");
-						close();
-						break;
-					case "SHUTDOWN":
-						writeLine("OK SHUTDOWN!");
-						close();
-						server.shutdown();
-						break;
-					case "HELP":
-						writeLine("OK Valid Commands: QUIT PING STATUS SUBMIT HELP");
-						break;
-					case "STATUS":
-					{
-						if (line.length == 2 && line[1] != null && !line[1].equals("")) {
-							String jobId = line[1];
-	//						System.err.println("Looking for job: "+jobId);
-							Job job = server.getQueue().getJob(jobId);
-							if (job != null) {
-								writeLine("OK "+jobId+" "+job.getState().getCode());
-							} else {
-								writeLine("ERROR "+jobId+" not found!");
+					if (s.equals("")) {
+						continue;
+					}
+					
+					String[] line = s.split(" ", 2);
+					String cmd = line[0].toUpperCase();
+	
+					if (!isauth) {
+						switch(cmd) {
+						case "QUIT":
+							writeLine("OK BYE!");
+							close();
+							break;
+						case "AUTH":
+							String passwd = "";
+							if (line.length == 2) {
+								passwd = line[1];
 							}
-						} else {
-							writeLine("OK " + server.getQueue().getStatus());
-						}
-					}
-					break;
-					case "KILL":
-					{
-						if (line.length == 2 && line[1] != null && !line[1].equals("")) {
-							String jobId = line[1];
-	//						System.err.println("Looking for job: "+jobId);
-							if (server.getQueue().killJob(jobId)) {
-								writeLine("OK "+jobId+" K");
+							if (passwd.equals(this.passwd)) {
+								isauth = true;
+								writeLine("OK AUTH");
 							} else {
-								writeLine("ERROR "+jobId+" not found or already complete!");
+								writeLine("ERROR WRONG PASSWORD");
 							}
+							break;
+						case "PING":
+							writeLine("OK PONG");
+							break;
+						case "HELP":
+							writeLine("OK Valid Commands: QUIT PING AUTH HELP");
+							break;
+						default:
+							writeLine("ERROR AUTH");
 						}
-					}
-					break;
-					case "RELEASE":
-					{
-						if (line.length == 2 && line[1] != null && !line[1].equals("")) {
-							String jobId = line[1];
-	//						System.err.println("Looking for job: "+jobId);
-							if (server.getQueue().releaseJob(jobId)) {
-								writeLine("OK "+jobId+" RELEASED");
-							} else {
-								writeLine("ERROR "+jobId+" not found or already released!");
-							}
-						}
-					}
-					break;
-					case "DETAIL":
+					} else {
+						switch(cmd){
+						case "QUIT":
+							writeLine("OK BYE!");
+							close();
+							break;
+						case "SHUTDOWN":
+							writeLine("OK SHUTDOWN!");
+							close();
+							server.shutdown();
+							break;
+						case "HELP":
+							writeLine("OK Valid Commands: QUIT PING STATUS SUBMIT HELP");
+							break;
+						case "STATUS":
 						{
-							if (line.length>1) {
+							if (line.length == 2 && line[1] != null && !line[1].equals("")) {
 								String jobId = line[1];
+		//						System.err.println("Looking for job: "+jobId);
 								Job job = server.getQueue().getJob(jobId);
 								if (job != null) {
 									writeLine("OK "+jobId+" "+job.getState().getCode());
-									writeLine("PROCS " + job.getProcs());
-									if (job.getMem() > 0) {
-										writeLine("MEM " + job.getMem());
-									}
-									
-									writeLine("CWD " + job.getCwdDefault());
-									if (job.getEnv() != null) {
-										for (String k: job.getEnv().keySet()) {
-											writeLine("ENV " + k +"="+job.getEnv().get(k));
-										}
-									}
-									if (job.getStdout()!=null) {
-										writeLine("STDOUT " + job.getStdout());
-									}
-									if (job.getStderr()!=null) {
-										writeLine("STDERR " + job.getStderr());
-									}
-									writeLine("SUBMIT " + job.getSubmitTime());
-									if (job.getStartTime() > 0) {
-										writeLine("START " + job.getStartTime());
-										if (job.getEndTime()>0) {
-											writeLine("END " + job.getEndTime());
-											writeLine("RETCODE " + job.getRetCode());
-										}
-									}
-									writeLine("OK");
 								} else {
 									writeLine("ERROR "+jobId+" not found!");
 								}
 							} else {
-								writeLine(server.getQueue().getServerStatus());
-								writeLine("OK");
+								writeLine("OK " + server.getQueue().getStatus());
 							}
 						}
 						break;
-					case "SUBMIT":
-						buildJob(line[1]);
+						case "KILL":
+						{
+							if (line.length == 2 && line[1] != null && !line[1].equals("")) {
+								String jobId = line[1];
+		//						System.err.println("Looking for job: "+jobId);
+								if (server.getQueue().killJob(jobId)) {
+									writeLine("OK "+jobId+" K");
+								} else {
+									writeLine("ERROR "+jobId+" not found or already complete!");
+								}
+							}
+						}
 						break;
-					case "PING":
-						writeLine("OK PONG");
+						case "RELEASE":
+						{
+							if (line.length == 2 && line[1] != null && !line[1].equals("")) {
+								String jobId = line[1];
+		//						System.err.println("Looking for job: "+jobId);
+								if (server.getQueue().releaseJob(jobId)) {
+									writeLine("OK "+jobId+" RELEASED");
+								} else {
+									writeLine("ERROR "+jobId+" not found or already released!");
+								}
+							}
+						}
 						break;
-					default:
-						writeLine("ERROR " + s);
-					
+						case "DETAIL":
+							{
+								if (line.length>1) {
+									String jobId = line[1];
+									Job job = server.getQueue().getJob(jobId);
+									if (job != null) {
+										writeLine("OK "+jobId+" "+job.getState().getCode());
+										writeLine("PROCS " + job.getProcs());
+										if (job.getMem() > 0) {
+											writeLine("MEM " + job.getMem());
+										}
+										
+										writeLine("CWD " + job.getCwdDefault());
+										if (job.getEnv() != null) {
+											for (String k: job.getEnv().keySet()) {
+												writeLine("ENV " + k +"="+job.getEnv().get(k));
+											}
+										}
+										if (job.getStdout()!=null) {
+											writeLine("STDOUT " + job.getStdout());
+										}
+										if (job.getStderr()!=null) {
+											writeLine("STDERR " + job.getStderr());
+										}
+										writeLine("SUBMIT " + job.getSubmitTime());
+										if (job.getStartTime() > 0) {
+											writeLine("START " + job.getStartTime());
+											if (job.getEndTime()>0) {
+												writeLine("END " + job.getEndTime());
+												writeLine("RETCODE " + job.getRetCode());
+											}
+										}
+										writeLine("OK");
+									} else {
+										writeLine("ERROR "+jobId+" not found!");
+									}
+								} else {
+									writeLine(server.getQueue().getServerStatus());
+									writeLine("OK");
+								}
+							}
+							break;
+						case "SUBMIT":
+							buildJob(line[1]);
+							break;
+						case "PING":
+							writeLine("OK PONG");
+							break;
+						default:
+							writeLine("ERROR " + s);
+						
+						}
 					}
-				}
-			} catch (IOException e) {
-				break;
 			}
-		}
-		try {
 			close();
 		} catch (IOException e) {
 			e.printStackTrace();

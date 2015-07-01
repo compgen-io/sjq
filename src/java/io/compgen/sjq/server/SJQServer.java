@@ -18,6 +18,7 @@ import java.util.Date;
 
 @Command(name="server", category="server", desc="Start an SJQ server")
 public class SJQServer {
+	public static final String VERSION = "0.9";
 	private ThreadedSocketListener threadedSocketListener = null;
 	private ThreadedJobQueue threadedJobQueue = null;
 	

@@ -12,6 +12,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ThreadedSocketListener {
 	protected int port = 0;
@@ -26,7 +28,8 @@ public class ThreadedSocketListener {
 	final private SJQServer server;
 	
 	private MonitoredThread thread = null;
-	
+	private Lock lock = new ReentrantLock();
+
 	public ThreadedSocketListener(SJQServer server, String listenIP, int port, File connFile, String passwd) {
 		this.server = server;
 		this.listenIP = listenIP;
@@ -36,6 +39,7 @@ public class ThreadedSocketListener {
 	}
 	
 	public void close() {
+		lock.lock();
 		if (!closed) {
 			closed = true;
 
@@ -55,6 +59,7 @@ public class ThreadedSocketListener {
 			}
 			server.log("Shutdown socket listener...");
 		}
+		lock.unlock();
 	}
 	
 	public boolean start() {

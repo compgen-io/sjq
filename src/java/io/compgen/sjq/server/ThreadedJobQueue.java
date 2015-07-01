@@ -14,6 +14,8 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ThreadedJobQueue {
 	private String queueID = StringUtils.randomString(8);
@@ -37,7 +39,9 @@ public class ThreadedJobQueue {
 	
 	private boolean closing = false;
 	private MonitoredThread procThread = null;
-		
+	
+	private Lock lock = new ReentrantLock();
+	
 	public ThreadedJobQueue(SJQServer server, int maxProcs, long maxMem, long timeout, String tempDir) {
 		this.server = server;
 		this.maxProcs = maxProcs;
@@ -50,12 +54,16 @@ public class ThreadedJobQueue {
 		}
 	}
 
-	synchronized public String getNewJobId() {
-		return queueID+"."+(++lastId);
+	public String getNewJobId() {
+		lock.lock();
+		String jobid = queueID+"."+(++lastId);
+		lock.unlock();
+		return jobid;
 	}
 	
 	public void close() {
 		if (!closing) {
+			lock.lock();
 			closing = true;
 			procThread.interrupt();
 			List<String> runningJobIds = new ArrayList<String>();
@@ -67,10 +75,16 @@ public class ThreadedJobQueue {
 				killJob(jobId);
 			}
 			server.log("Shutdown job queue...");
+			lock.unlock();
 		}
 	}
 
 	public boolean start() {
+		lock.lock();
+		if (procThread != null) {
+			lock.unlock();
+			return false;
+		}
 		procThread = new MonitoredThread(new Runnable() {
 			public void run() {
 				while (!closing) {
@@ -109,19 +123,23 @@ public class ThreadedJobQueue {
 		});
 		
 		procThread.start();
+		lock.unlock();
 		return true;
 	}
 
 	public void printRunningStatus() {
 		System.err.println("-------------------------");
+		lock.lock();
 		for (RunningJob job: running.values()) {
 			System.err.println("Running: " + job.getJob().getJobId() + " "+ StringUtils.pad(job.getJob().getName(), 12, ' ') + " " + job.getJob().getProcs() + " " + timespanToString(System.currentTimeMillis() - job.getJob().getStartTime()));
 		}
+		lock.unlock();
 		System.err.println("-------------------------");
 	}
 	
 	public String getServerStatus() {
 		String out = "";
+		lock.lock();
 		for (Job job: server.getQueue().jobs.values()) {
 			if (!out.equals("")) {
 				out += "\n";
@@ -144,14 +162,18 @@ public class ThreadedJobQueue {
 			}
 			out += StringUtils.join("\t", outs);
 		}
+		lock.unlock();
 		return out;
 	}
 	
 	public String getStatus() {
 		TallyValues<String> counter = new TallyValues<String>();
+		lock.lock();
 		for (Job job: jobs.values()) {
 			counter.incr(job.getState().getCode());
 		}
+		lock.unlock();
+
 		String s = "";
 		for (String k: counter.keySet()) {
 			if (!s.equals("")) {
@@ -167,17 +189,21 @@ public class ThreadedJobQueue {
 	}
 	
 	private Job findJobToRun() {
+		lock.lock();
 		for (Job job: pending) {
 			if (job.getState() == JobState.QUEUED) {
 				if (usedProcs + job.getProcs() <= maxProcs && (maxMem < 0 || usedMem + job.getMem() < maxMem)) {
+					lock.unlock();
 					return job;
 				}
 			}
 		}
+		lock.unlock();
 		return null;
 	}
 	
 	private void checkJobHolds() {
+		lock.lock();
 		for (Job job: pending) {
 			if (job.getState() == JobState.HOLD) {
 				boolean good = true;
@@ -193,12 +219,14 @@ public class ThreadedJobQueue {
 				}
 			}
 		}
+		lock.unlock();
 	}
 
 	private void runJob(Job job) {
 		if (closing) {
 			return;
 		}
+		lock.lock();
 		server.log("Starting job - "+ job.getJobId());
 		job.setState(JobState.RUNNING);
 		job.setStartTime(System.currentTimeMillis());
@@ -209,6 +237,7 @@ public class ThreadedJobQueue {
 		
 		RunningJob run = new RunningJob(this, job);
 		running.put(job.getJobId(), run);
+		lock.unlock();
 		run.start();
 	}
 
@@ -218,8 +247,10 @@ public class ThreadedJobQueue {
 		job.setState(JobState.HOLD);
 		job.setSubmitTime(System.currentTimeMillis());
 
+		lock.lock();
 		jobs.put(jobId,  job);
 		pending.add(job);
+		lock.unlock();
 		emptyCheck = -1;
 
 		server.log("New job: "+ jobId+ " "+job.getName());
@@ -234,24 +265,29 @@ public class ThreadedJobQueue {
 			return false;
 		}
 		
+		lock.lock();
 		if (running.containsKey(jobId)) {
 			server.log("Killing job: " + jobId);
 			running.get(jobId).kill();
 			job.setState(JobState.KILLED);
 			server.log("Job killed: " + jobId);
+			lock.unlock();
 			return true;
 		}
 		
 		if (job != null && (job.getState() == JobState.HOLD || job.getState() == JobState.QUEUED)) {
 			job.setState(JobState.KILLED);
 			server.log("Job killed: " + jobId);
+			lock.unlock();
 			return true;
 		}
+		lock.unlock();
 		return false;
 	}
 	
 	public void jobDone(String jobId, int retcode) {
 		server.log("Job done: " + jobId + " " + retcode);
+		lock.lock();
 		running.remove(jobId);
 		Job job = jobs.get(jobId);
 
@@ -266,7 +302,8 @@ public class ThreadedJobQueue {
 
 		usedProcs -= job.getProcs();
 		usedMem -= job.getMem();
-		
+		lock.unlock();
+
 		procThread.interrupt();
 	}
 	
@@ -363,12 +400,15 @@ public class ThreadedJobQueue {
 			return false;
 		}
 		
+		lock.lock();
 		if (job != null && (job.getState() == JobState.USERHOLD)) {
 			job.setState(JobState.HOLD);
 			server.log("Job released from user-hold: " + jobId);
 			procThread.interrupt();
+			lock.unlock();
 			return true;
 		}
+		lock.unlock();
 		return false;
 	}
 }
