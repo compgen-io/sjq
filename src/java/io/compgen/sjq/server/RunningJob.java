@@ -4,6 +4,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Map;
 
 public class RunningJob {
@@ -48,6 +56,13 @@ public class RunningJob {
 			monitorFile.setReadable(true, true);
 			monitorFile.setWritable(true, true);
 			monitorFile.deleteOnExit();
+
+			// TODO: chown file? sticky bit?
+//			UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
+//			UserPrincipal user = lookupService.lookupPrincipalByName("foo");
+//			Files.setOwner(monitorFile.toPath(), user);
+//			PosixFilePermissions perm = new PosixFilePermissions(); 
+//			Files.getFileAttributeView(monitorFile.toPath(), PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setPermissions(perms);
 			
 			String monitorScript = "#!/bin/sh\n"+
 					"trap 'pkill -TERM -P $PID; exit 127' INT TERM EXIT\n" +
