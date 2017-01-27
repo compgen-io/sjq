@@ -208,7 +208,18 @@ public class SessionHandler implements Runnable {
 			case "ENV":
 				List<String> env = StringUtils.quotedSplit(line[1], "=");
 				if (env.size() == 2) {
-					job.addEnv(env.get(0), env.get(1));
+					
+					String k = env.get(0);
+					String v = env.get(1);
+					
+					if (k.startsWith("\"") && k.endsWith("\"")) {
+						k = k.substring(1,k.length()-1);
+					}
+					if (v.startsWith("\"") && v.endsWith("\"")) {
+						v = v.substring(1,v.length()-1);
+					}
+					
+					job.addEnv(k, v);
 				}
 				break;
 			case "PROCS":

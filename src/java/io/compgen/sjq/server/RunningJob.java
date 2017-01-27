@@ -4,14 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.nio.file.attribute.UserPrincipal;
-import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Map;
 
 public class RunningJob {
@@ -44,7 +36,7 @@ public class RunningJob {
 			script.deleteOnExit();
 
 			OutputStream os = new FileOutputStream(script);
-			os.write(job.getBody().getBytes());
+			os.write(job.getBody().replace("\\$(", "$(").getBytes()); // replace gets around a bug where scripts for other queues are incompatible.
 			os.close();
 
 			monitorFile = File.createTempFile("sjq-"+job.getJobId()+"-", ".monitor.sh", queue.getTempDir());
