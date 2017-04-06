@@ -83,7 +83,11 @@ public class RunningJob {
 					stdout = new File(job.getStdout());
 				
 					if (stdout.isDirectory()) {
-						stdout = new File(stdout, job.getName()+"."+job.getJobId()+".stdout");
+						String tmp = job.getName();
+						if (tmp.contains(File.pathSeparator)) {
+							tmp = tmp.substring(tmp.lastIndexOf(File.pathSeparator)+1);
+						}
+						stdout = new File(stdout, tmp+"."+job.getJobId()+".stdout");
 					}
 				} else {
 					stdout = new File(new File(job.getCwdDefault()), job.getName()+"."+job.getJobId()+".stdout");
@@ -94,7 +98,11 @@ public class RunningJob {
 					stderr = new File(job.getStderr());
 				
 					if (stderr.isDirectory()) {
-						stderr = new File(stderr, job.getName()+"."+job.getJobId()+".stderr");
+						String tmp = job.getName();
+						if (tmp.contains(File.pathSeparator)) {
+							tmp = tmp.substring(tmp.lastIndexOf(File.pathSeparator)+1);
+						}
+						stderr = new File(stderr, tmp+"."+job.getJobId()+".stderr");
 					}
 				} else {
 					stderr = new File(new File(job.getCwdDefault()), job.getName()+"."+job.getJobId()+".stderr");
